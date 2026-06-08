@@ -1,0 +1,26 @@
+{
+  "name": "@trackproof/bitget",
+  "version": "0.0.0",
+  "description": "TrackProof Bitget adapter: read-only public market history for replay (G1).",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*"
+  ],
+  "dependencies": {
+    "@trackproof/core": "0.0.0"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test \"dist/**/*.test.js\""
+  }
+}
