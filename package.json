@@ -14,6 +14,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
+    "trackproof": "node packages/cli/dist/index.js",
     "test": "npm run build && node --test \"packages/*/dist/**/*.test.js\""
   },
   "devDependencies": {

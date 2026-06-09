@@ -22,3 +22,6 @@ coverage/
 # misc
 .DS_Store
 .turbo/
+
+# trackproof local runtime store (agent key + capsule chain)
+.trackproof/

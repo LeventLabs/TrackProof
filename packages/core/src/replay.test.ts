@@ -129,3 +129,16 @@ test("memory_purchase verifies, and a missing receipt fails", async () => {
   const badCapsule = appendCapsule(null, { kind: "memory_purchase", body: bad, committed_at: 2 }, kp.publicKeyHex, kp.privateKey);
   assert.equal((await verifyCapsule(badCapsule, new MockSource(SERIES))).verdict, "FAILED_PAYMENT");
 });
+
+test("the input window stays inclusive when the source treats startTime as exclusive (Bitget boundary)", async () => {
+  // Mirrors Bitget /candles: the candle whose open time == startTime is excluded.
+  class ExclusiveStartSource implements MarketDataSource {
+    constructor(private readonly series: Candle[]) {}
+    async getCandles(query: CandleQuery): Promise<Candle[]> {
+      return this.series.filter((c) => c.time > query.startTime && c.time <= query.endTime);
+    }
+  }
+  const capsule = tradeCapsule({ side: "long", size: "1", type: "market" });
+  const result = await verifyCapsule(capsule, new ExclusiveStartSource(SERIES));
+  assert.equal(result.verdict, "PASSED");
+});

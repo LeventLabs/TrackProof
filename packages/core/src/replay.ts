@@ -135,6 +135,22 @@ export interface ReplayOptions {
 
 const DEFAULT_OUTCOME_HORIZON_MS = 30 * 60 * 1000;
 
+/**
+ * Fetch all candles whose open time is in [start, end] inclusive. Bitget treats
+ * `startTime` as exclusive, so widen the lower bound and filter — making the input
+ * window deterministic between emit and replay regardless of the boundary convention.
+ */
+async function fetchWindow(
+  source: MarketDataSource,
+  instrument: string,
+  granularity: string,
+  start: number,
+  end: number,
+): Promise<Candle[]> {
+  const candles = await source.getCandles({ instrument, granularity, startTime: start - 1, endTime: end });
+  return candles.filter((c) => c.time >= start && c.time <= end).sort((a, b) => a.time - b.time);
+}
+
 /** G1 + sim-fill + P&L for a trade_decision capsule. */
 export async function verifyTradeDecision(
   capsule: SignedCapsule,
@@ -145,12 +161,13 @@ export async function verifyTradeDecision(
   const { market_ref } = body;
 
   // G1: re-fetch the pinned input window and recompute the digest.
-  const inputCandles = await source.getCandles({
-    instrument: market_ref.instrument,
-    granularity: market_ref.candles.granularity,
-    startTime: market_ref.candles.window[0],
-    endTime: market_ref.candles.window[1],
-  });
+  const inputCandles = await fetchWindow(
+    source,
+    market_ref.instrument,
+    market_ref.candles.granularity,
+    market_ref.candles.window[0],
+    market_ref.candles.window[1],
+  );
   if (computeInputsDigest({ candles: inputCandles }) !== body.inputs_digest) {
     return { kind: "trade_decision", verdict: "FAILED_DATA", reason: "inputs_digest mismatch (G1)" };
   }
