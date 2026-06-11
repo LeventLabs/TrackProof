@@ -62,11 +62,12 @@ test("emit builds a verifiable chain, and the capsule replays PASSED", async () 
     assert.ok(chain.ok, chain.reason);
 
     const source = new MockSource([...INPUT, ...OUTCOME]);
-    const verification = await verifyCapsule(c1, source);
+    const verification = await verifyCapsule(c1, source, { outcomeHorizonMs: 2 * MINUTE });
     assert.equal(verification.verdict, "PASSED");
     if (verification.kind === "trade_decision") {
-      assert.equal(verification.fill?.fillPrice, "102");
-      assert.equal(verification.pnl, "3");
+      assert.equal(verification.outcome, "settled");
+      assert.equal(verification.fill?.fillPrice, "104"); // decision_time now = close of last input → fill one candle later
+      assert.equal(verification.pnl, "1");
     }
   });
 });

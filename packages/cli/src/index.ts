@@ -62,9 +62,14 @@ async function cmdVerify(flags: Record<string, string | boolean>, withAnchor: bo
   const g3 = verifyChain(chain);
 
   console.log(`Verifying last capsule (seq ${target.seq}, ${chain.length} in chain):`);
-  console.log(`  G1 (real data + replay): ${g1.verdict}${g1.reason ? ` — ${g1.reason}` : ""}`);
-  if (g1.kind === "trade_decision" && g1.fill?.filled) {
-    console.log(`     fill ${g1.fill.fillPrice}   P&L ${g1.pnl} (descriptive, not execution-realistic)`);
+  const failReason = g1.verdict !== "PASSED" && g1.reason ? ` — ${g1.reason}` : "";
+  console.log(`  G1 (real data + replay): ${g1.verdict}${failReason}`);
+  if (g1.kind === "trade_decision" && g1.verdict === "PASSED") {
+    if (g1.outcome === "settled" && g1.fill?.filled) {
+      console.log(`     fill ${g1.fill.fillPrice}   P&L ${g1.pnl} (descriptive, not execution-realistic)`);
+    } else {
+      console.log(`     outcome PENDING — window not yet complete; replay later for final P&L`);
+    }
   }
   console.log(`  G3 (chain complete):     ${g3.ok ? "yes" : `NO — broken at seq ${g3.firstBadSeq}`}`);
   console.log(

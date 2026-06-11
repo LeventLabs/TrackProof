@@ -58,10 +58,11 @@ function tradeCapsule(action: TradeDecisionBody["action"], digestSeries: Candle[
 
 test("genuine trade_decision passes G1 and yields a market fill + P&L", async () => {
   const capsule = tradeCapsule({ side: "long", size: "1", type: "market" });
-  const result = await verifyCapsule(capsule, new MockSource(SERIES));
+  const result = await verifyCapsule(capsule, new MockSource(SERIES), { outcomeHorizonMs: 2 * MINUTE });
   assert.equal(result.kind, "trade_decision");
   assert.equal(result.verdict, "PASSED");
   if (result.kind === "trade_decision") {
+    assert.equal(result.outcome, "settled");
     assert.equal(result.fill?.filled, true);
     assert.equal(result.fill?.fillPrice, "102"); // open of the first outcome candle
     assert.equal(result.outcomeStart, T0 + 3 * MINUTE);
@@ -71,9 +72,10 @@ test("genuine trade_decision passes G1 and yields a market fill + P&L", async ()
 
 test("a short position prices P&L with the opposite sign", async () => {
   const capsule = tradeCapsule({ side: "short", size: "2", type: "market" });
-  const result = await verifyCapsule(capsule, new MockSource(SERIES));
+  const result = await verifyCapsule(capsule, new MockSource(SERIES), { outcomeHorizonMs: 2 * MINUTE });
   assert.equal(result.verdict, "PASSED");
   if (result.kind === "trade_decision") {
+    assert.equal(result.outcome, "settled");
     assert.equal(result.pnl, "-6"); // (105 - 102) * 2 * short
   }
 });
@@ -141,4 +143,23 @@ test("the input window stays inclusive when the source treats startTime as exclu
   const capsule = tradeCapsule({ side: "long", size: "1", type: "market" });
   const result = await verifyCapsule(capsule, new ExclusiveStartSource(SERIES));
   assert.equal(result.verdict, "PASSED");
+});
+
+test("an immature outcome window returns incomplete and credits no P&L", async () => {
+  // Default 30-min horizon; the mock series ends at T0+4m, far short of the window end.
+  const capsule = tradeCapsule({ side: "long", size: "1", type: "market" });
+  const result = await verifyCapsule(capsule, new MockSource(SERIES));
+  assert.equal(result.verdict, "PASSED");
+  if (result.kind === "trade_decision") {
+    assert.equal(result.outcome, "incomplete");
+    assert.equal(result.pnl, undefined);
+  }
+});
+
+test("a tampered capsule fails the signature check before any data work", async () => {
+  const capsule = tradeCapsule({ side: "long", size: "1", type: "market" });
+  const tampered = structuredClone(capsule);
+  (tampered.body as TradeDecisionBody).action.size = "999";
+  const result = await verifyCapsule(tampered, new MockSource(SERIES));
+  assert.equal(result.verdict, "FAILED_SIGNATURE");
 });

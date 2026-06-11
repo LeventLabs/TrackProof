@@ -1,6 +1,6 @@
 import type { CanonicalValue } from "./canonical.js";
 import { canonicalHash } from "./hash.js";
-import type { MemoryPurchaseBody, SignedCapsule, TradeDecisionBody } from "./capsule.js";
+import { verifyCapsuleSignature, type MemoryPurchaseBody, type SignedCapsule, type TradeDecisionBody } from "./capsule.js";
 
 /** Normalized OHLCV candle. Prices/volumes are string-encoded decimals. */
 export interface Candle {
@@ -106,15 +106,17 @@ function formatDecimal(n: number): string {
   return (Math.round(n * 1e8) / 1e8).toString();
 }
 
-export type Verdict = "PASSED" | "FAILED_DATA" | "FAILED_PAYMENT" | "PENDING";
+export type Verdict = "PASSED" | "FAILED_DATA" | "FAILED_PAYMENT" | "FAILED_SIGNATURE" | "PENDING";
 
 export interface TradeVerification {
   kind: "trade_decision";
-  /** PASSED once G1 holds; FAILED_DATA when re-fetched history contradicts the claim. */
-  verdict: Extract<Verdict, "PASSED" | "FAILED_DATA">;
+  /** Authenticity: PASSED once the signature + G1 hold; FAILED_* otherwise. */
+  verdict: Extract<Verdict, "PASSED" | "FAILED_DATA" | "FAILED_SIGNATURE">;
   reason?: string;
   fill?: Fill;
-  /** Descriptive, not execution-realistic. */
+  /** "settled" once the full outcome window has elapsed in the data; "incomplete" otherwise. */
+  outcome?: "settled" | "incomplete";
+  /** Descriptive, not execution-realistic. Present only when `outcome === "settled"`. */
   pnl?: string;
   /** outcome_evaluation_start (fill time) for the G2 certifiability rule (R4.4). */
   outcomeStart?: number;
@@ -122,7 +124,7 @@ export interface TradeVerification {
 
 export interface MemoryVerification {
   kind: "memory_purchase";
-  verdict: Extract<Verdict, "PASSED" | "FAILED_PAYMENT">;
+  verdict: Extract<Verdict, "PASSED" | "FAILED_PAYMENT" | "FAILED_SIGNATURE">;
   reason?: string;
 }
 
@@ -151,12 +153,16 @@ async function fetchWindow(
   return candles.filter((c) => c.time >= start && c.time <= end).sort((a, b) => a.time - b.time);
 }
 
-/** G1 + sim-fill + P&L for a trade_decision capsule. */
+/** Authenticity (signature + G1) + sim-fill + outcome maturity for a trade_decision capsule. */
 export async function verifyTradeDecision(
   capsule: SignedCapsule,
   source: MarketDataSource,
   options: ReplayOptions = {},
 ): Promise<TradeVerification> {
+  if (!verifyCapsuleSignature(capsule)) {
+    return { kind: "trade_decision", verdict: "FAILED_SIGNATURE", reason: "invalid signature" };
+  }
+
   const body = capsule.body as TradeDecisionBody;
   const { market_ref } = body;
 
@@ -174,6 +180,10 @@ export async function verifyTradeDecision(
 
   // Outcome: candles strictly after the decision instant, for sim-fill + P&L.
   const horizon = options.outcomeHorizonMs ?? DEFAULT_OUTCOME_HORIZON_MS;
+  const intervalMs =
+    inputCandles.length >= 2
+      ? inputCandles[inputCandles.length - 1]!.time - inputCandles[inputCandles.length - 2]!.time
+      : 0;
   const outcome = (
     await source.getCandles({
       instrument: market_ref.instrument,
@@ -186,9 +196,26 @@ export async function verifyTradeDecision(
     .sort((a, b) => a.time - b.time);
 
   const fill = simulateFill(body.action, outcome);
+
+  // The outcome is "settled" only once the data covers the full horizon. Replaying before then
+  // would credit a partial, non-reproducible P&L — so leave it incomplete and credit nothing.
+  const last = outcome[outcome.length - 1];
+  const settled = last !== undefined && last.time + intervalMs >= market_ref.decision_time + horizon;
+  if (!settled) {
+    return {
+      kind: "trade_decision",
+      verdict: "PASSED",
+      outcome: "incomplete",
+      fill,
+      outcomeStart: fill.fillTime,
+      reason: "outcome window not yet complete",
+    };
+  }
+
   return {
     kind: "trade_decision",
     verdict: "PASSED",
+    outcome: "settled",
     fill,
     pnl: computePnl(body.action, fill, outcome),
     outcomeStart: fill.fillTime,
@@ -200,6 +227,9 @@ export async function verifyTradeDecision(
  * payments layer (WS3); here the receipt is checked for being well-formed and present.
  */
 export function verifyMemoryPurchase(capsule: SignedCapsule): MemoryVerification {
+  if (!verifyCapsuleSignature(capsule)) {
+    return { kind: "memory_purchase", verdict: "FAILED_SIGNATURE", reason: "invalid signature" };
+  }
   const body = capsule.body as MemoryPurchaseBody;
   if (!body.payment_ref || !body.body_hash) {
     return { kind: "memory_purchase", verdict: "FAILED_PAYMENT", reason: "missing payment_ref or body_hash" };

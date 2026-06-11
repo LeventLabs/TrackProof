@@ -46,7 +46,16 @@ export class TrackProof {
     const candles = [...trade.candles].sort((a, b) => a.time - b.time);
     const windowStart = candles[0]!.time;
     const windowEnd = candles[candles.length - 1]!.time;
-    const decisionTime = trade.decisionTime ?? windowEnd;
+    // decision_time is the CLOSE instant of the last input candle (= the open of the next
+    // candle), so the first outcome candle opens strictly after the decision. This preserves
+    // the "decided before the outcome" property the G2 anchor must certify (R2.4 / R4.4).
+    let decisionTime = trade.decisionTime;
+    if (decisionTime === undefined) {
+      if (candles.length < 2) {
+        throw new Error("emit needs at least 2 candles to infer the interval, or an explicit decisionTime");
+      }
+      decisionTime = windowEnd + (windowEnd - candles[candles.length - 2]!.time);
+    }
 
     const body: TradeDecisionBody = {
       market_ref: {
