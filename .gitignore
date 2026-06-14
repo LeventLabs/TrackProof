@@ -25,3 +25,9 @@ coverage/
 
 # trackproof local runtime store (agent key + capsule chain)
 .trackproof/
+
+# foundry (contracts/)
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+contracts/lib/

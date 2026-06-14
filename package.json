@@ -15,7 +15,8 @@
     "build": "tsc -b",
     "clean": "tsc -b --clean",
     "trackproof": "node packages/cli/dist/index.js",
-    "test": "npm run build && node --test \"packages/*/dist/**/*.test.js\""
+    "test": "npm run build && node --test \"packages/*/dist/**/*.test.js\"",
+    "test:contracts": "forge test --root contracts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
