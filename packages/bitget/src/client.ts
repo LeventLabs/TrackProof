@@ -1,6 +1,8 @@
 import type { Candle, CandleQuery, MarketDataSource } from "@trackproof/core";
 
 const DEFAULT_BASE_URL = "https://api.bitget.com";
+const PAGE_LIMIT = 200;
+const MAX_PAGES = 50;
 
 export interface BitgetMarketDataOptions {
   /** Defaults to BITGET_API_BASE_URL or https://api.bitget.com. */
@@ -18,9 +20,8 @@ interface BitgetCandlesResponse {
 }
 
 /**
- * Map Bitget's raw candle rows [ts, open, high, low, close, baseVol, quoteVol] to
- * normalized Candles, sorted ascending by time (so the G1 digest is order-stable
- * regardless of the API's return order).
+ * Map Bitget's raw candle rows [ts, open, high, low, close, baseVol, quoteVol] to normalized
+ * Candles, sorted ascending by time (so the G1 digest is order-stable regardless of API order).
  */
 export function parseCandles(rows: string[][]): Candle[] {
   return rows
@@ -36,9 +37,62 @@ export function parseCandles(rows: string[][]): Candle[] {
     .sort((a, b) => a.time - b.time);
 }
 
+/** Fetch one page: up to `limit` candles with open time `<= endTime`, ascending. */
+export type CandlePageFetcher = (endTime: number, limit: number) => Promise<Candle[]>;
+
 /**
- * Read-only adapter over Bitget's PUBLIC candle endpoints — no API key required for
- * market history, so replay/verification works key-free. The adapter never trades.
+ * Walk `history-candles` backward from `query.endTime` until the [startTime, endTime] window is
+ * covered, deduping by time. `history-candles` has far deeper retention than the recent `/candles`
+ * endpoint (which empties after ~30–90 days at 1m), so old honest capsules still replay instead of
+ * failing G1 with a spurious FAILED_DATA.
+ */
+export async function paginateCandles(
+  fetchPage: CandlePageFetcher,
+  query: Pick<CandleQuery, "startTime" | "endTime">,
+  pageLimit = PAGE_LIMIT,
+  maxPages = MAX_PAGES,
+): Promise<Candle[]> {
+  const byTime = new Map<number, Candle>();
+  let cursor = query.endTime;
+  for (let page = 0; page < maxPages; page++) {
+    const candles = await fetchPage(cursor, pageLimit);
+    if (candles.length === 0) break;
+    let earliest = Infinity;
+    for (const candle of candles) {
+      byTime.set(candle.time, candle);
+      if (candle.time < earliest) earliest = candle.time;
+    }
+    if (earliest <= query.startTime || earliest >= cursor) break; // covered, or no progress
+    cursor = earliest;
+  }
+  return [...byTime.values()]
+    .filter((candle) => candle.time >= query.startTime && candle.time <= query.endTime)
+    .sort((a, b) => a.time - b.time);
+}
+
+const GRANULARITY_MS: Record<string, number> = {
+  "1min": 60_000,
+  "3min": 180_000,
+  "5min": 300_000,
+  "15min": 900_000,
+  "30min": 1_800_000,
+  "1h": 3_600_000,
+  "4h": 14_400_000,
+  "6h": 21_600_000,
+  "12h": 43_200_000,
+  "1day": 86_400_000,
+  "3day": 259_200_000,
+  "1week": 604_800_000,
+};
+
+/** Milliseconds per Bitget granularity; defaults to 1 minute for unknown strings. */
+export function granularityMs(granularity: string): number {
+  return GRANULARITY_MS[granularity] ?? 60_000;
+}
+
+/**
+ * Read-only adapter over Bitget's PUBLIC `history-candles` endpoint — no API key required, deep
+ * retention, paginated. The adapter never trades.
  */
 export class BitgetMarketData implements MarketDataSource {
   private readonly baseUrl: string;
@@ -52,18 +106,25 @@ export class BitgetMarketData implements MarketDataSource {
   }
 
   async getCandles(query: CandleQuery): Promise<Candle[]> {
-    const path = this.product === "spot" ? "/api/v2/spot/market/candles" : "/api/v2/mix/market/candles";
+    return paginateCandles((endTime, limit) => this.fetchPage(query, endTime, limit), query);
+  }
+
+  private async fetchPage(query: CandleQuery, endTime: number, limit: number): Promise<Candle[]> {
+    const path =
+      this.product === "spot" ? "/api/v2/spot/market/history-candles" : "/api/v2/mix/market/history-candles";
     const url = new URL(path, this.baseUrl);
     url.searchParams.set("symbol", query.instrument);
     url.searchParams.set("granularity", query.granularity);
-    url.searchParams.set("startTime", String(query.startTime));
-    url.searchParams.set("endTime", String(query.endTime));
-    url.searchParams.set("limit", "1000");
+    // Bitget compares `endTime` against a candle's CLOSE. To honor this fetcher's contract (inclusive
+    // of the candle whose OPEN time == endTime), extend the bound by one interval.
+    const apiEndTime = Math.min(endTime, Date.now()) + granularityMs(query.granularity);
+    url.searchParams.set("endTime", String(apiEndTime));
+    url.searchParams.set("limit", String(limit));
     if (this.product === "futures") url.searchParams.set("productType", this.productType);
 
     const response = await fetch(url, { headers: { accept: "application/json" } });
     if (!response.ok) {
-      throw new Error(`Bitget candles HTTP ${response.status} for ${query.instrument}`);
+      throw new Error(`Bitget history-candles HTTP ${response.status} for ${query.instrument}`);
     }
     const json = (await response.json()) as BitgetCandlesResponse;
     if (json.code !== "00000") {
