@@ -3,6 +3,7 @@ import {
   createWalletClient,
   http,
   parseAbi,
+  parseEventLogs,
   type Hex,
   type PublicClient,
   type WalletClient,
@@ -88,7 +89,14 @@ export class BaseAnchorStore implements AnchorStore {
       account: this.account,
       chain: baseSepolia,
     });
-    await this.publicClient.waitForTransactionReceipt({ hash });
+    const receipt = await this.publicClient.waitForTransactionReceipt({ hash });
+    // Read the commitment straight from the emitted event to avoid read-after-write RPC lag.
+    const events = parseEventLogs({ abi: ANCHOR_ABI, eventName: "RootAnchored", logs: receipt.logs });
+    const args = events[0]?.args as { root?: Hex; blockNumber?: bigint; timestamp?: bigint } | undefined;
+    if (args?.root !== undefined && args.blockNumber !== undefined && args.timestamp !== undefined) {
+      const fromEvent = toAnchorRecord(args.root.slice(2), args.blockNumber, args.timestamp);
+      if (fromEvent) return fromEvent;
+    }
     const record = await this.getByRoot(root);
     if (!record) throw new Error("submitRoot did not produce an anchor record");
     return record;

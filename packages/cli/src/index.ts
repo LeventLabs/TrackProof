@@ -1,21 +1,27 @@
 #!/usr/bin/env node
+import { BaseAnchorStore } from "@trackproof/base";
 import { BitgetMarketData } from "@trackproof/bitget";
-import { openStore, readChain, TrackProof } from "@trackproof/sdk";
-import { verifyCapsule, verifyChain, type TradeDecisionBody } from "@trackproof/core";
+import { anchorCapsules, capsuleLeaf, verifyCapsule, verifyChain, verifyCommitment, type TradeDecisionBody } from "@trackproof/core";
+import { loadAnchor, openStore, readChain, saveAnchor, TrackProof } from "@trackproof/sdk";
 import { INSTALL_TARGETS, installSkill, isInstallTarget, type InstallTarget } from "@trackproof/skill";
 import { parseArgs } from "./args.js";
 
 const HOME = process.env.TRACKPROOF_HOME ?? ".trackproof";
+const ANCHOR_ADDRESS = (process.env.TRACKPROOF_ANCHOR_ADDRESS ??
+  "0x290825Ee1124617649c527A2230881e63173519D") as `0x${string}`;
 
 const HELP = `trackproof — verifiable track records for AI trading agents
 
 Usage:
-  trackproof emit   --instrument <SYMBOL> [--granularity 1min] [--demo]
-  trackproof replay [--last]                 Local G1 + G3 verification
-  trackproof verify [--last] [--with-anchor]
+  trackproof emit    --instrument <SYMBOL> [--granularity 1min] [--demo]
+  trackproof anchor                            Merkle-root the chain and anchor it on Base
+  trackproof replay  [--last]                  Local G1 + G3 verification
+  trackproof verify  [--last] [--with-anchor]  Adds G2 (on-chain commitment) with --with-anchor
+  trackproof install --target claude|codex|openclaw
   trackproof --help
 
-Simulation / paper only. Market history uses Bitget's public endpoints (no API key needed).`;
+Simulation / paper only. Market history uses Bitget's public endpoints (no API key needed).
+Anchoring (write) needs DEPLOYER_PRIVATE_KEY; verification reads are keyless.`;
 
 const FLAG = (v: string | boolean | undefined, fallback: string): string =>
   typeof v === "string" ? v : fallback;
@@ -73,8 +79,31 @@ async function cmdVerify(flags: Record<string, string | boolean>, withAnchor: bo
     }
   }
   console.log(`  G3 (chain complete):     ${g3.ok ? "yes" : `NO — broken at seq ${g3.firstBadSeq}`}`);
+
+  if (!withAnchor) {
+    console.log("  G2 (on-chain commitment): skipped (use --with-anchor)");
+    return;
+  }
+  const anchor = loadAnchor(openStore(HOME));
+  if (!anchor) {
+    console.log("  G2 (on-chain commitment): no local anchor — run `trackproof anchor` first");
+    return;
+  }
+  const proof = anchor.proofs[capsuleLeaf(target)];
+  if (!proof) {
+    console.log("  G2 (on-chain commitment): this capsule is not in the latest anchor — run `trackproof anchor`");
+    return;
+  }
+  const record = await new BaseAnchorStore({ anchorAddress: ANCHOR_ADDRESS }).getByRoot(anchor.root);
+  if (!record) {
+    console.log("  G2 (on-chain commitment): anchored root not found on-chain yet");
+    return;
+  }
+  const outcomeStart = g1.kind === "trade_decision" ? g1.outcomeStart : undefined;
+  const commitment = verifyCommitment(target, proof, record, outcomeStart);
   console.log(
-    `  G2 (on-chain commitment): ${withAnchor ? "not available yet — pending the anchor layer" : "skipped (use --with-anchor once available)"}`,
+    `  G2 (on-chain commitment): included=${commitment.included} certifiable=${commitment.certifiable}` +
+      `${commitment.reason ? ` — ${commitment.reason}` : ""} (Base block ${record.block})`,
   );
 }
 
@@ -95,6 +124,27 @@ function cmdInstall(flags: Record<string, string | boolean>): void {
   console.log("(MCP server registration ships with the MCP package — coming soon.)");
 }
 
+async function cmdAnchor(): Promise<void> {
+  const store = openStore(HOME);
+  const chain = readChain(store);
+  if (chain.length === 0) {
+    console.log("No capsules to anchor — run `trackproof emit` first.");
+    return;
+  }
+  const privateKey = process.env.DEPLOYER_PRIVATE_KEY as `0x${string}` | undefined;
+  if (!privateKey) {
+    console.error("Set DEPLOYER_PRIVATE_KEY (a funded Base Sepolia key) to anchor.");
+    process.exitCode = 1;
+    return;
+  }
+  const anchorStore = new BaseAnchorStore({ anchorAddress: ANCHOR_ADDRESS, privateKey });
+  console.log(`Anchoring ${chain.length} capsules to Base (${ANCHOR_ADDRESS})…`);
+  const { record, proofs } = await anchorCapsules(anchorStore, chain);
+  saveAnchor(store, { root: record.root, proofs: Object.fromEntries(proofs) });
+  console.log(`Anchored root ${record.root.slice(0, 16)}… at Base block ${record.block} (ts ${record.timestamp}).`);
+  console.log(`Saved ${proofs.size} inclusion proofs to ${HOME}/anchor.json.`);
+}
+
 async function main(): Promise<void> {
   const { command, flags } = parseArgs(process.argv.slice(2));
 
@@ -110,6 +160,8 @@ async function main(): Promise<void> {
       return cmdVerify(flags, false);
     case "verify":
       return cmdVerify(flags, Boolean(flags["with-anchor"]));
+    case "anchor":
+      return cmdAnchor();
     case "install":
       return cmdInstall(flags);
     default:

@@ -47,3 +47,19 @@ export function lastCapsule(store: AgentStore): SignedCapsule | null {
 export function appendCapsuleToStore(store: AgentStore, capsule: SignedCapsule): void {
   appendFileSync(chainPath(store), JSON.stringify(capsule) + "\n");
 }
+
+/** The latest anchored batch: the on-chain root plus per-capsule-leaf Merkle proofs. */
+export interface AnchorFile {
+  root: string;
+  proofs: Record<string, string[]>;
+}
+
+export function saveAnchor(store: AgentStore, anchor: AnchorFile): void {
+  writeFileSync(join(store.home, "anchor.json"), JSON.stringify(anchor, null, 2) + "\n");
+}
+
+export function loadAnchor(store: AgentStore): AnchorFile | null {
+  const path = join(store.home, "anchor.json");
+  if (!existsSync(path)) return null;
+  return JSON.parse(readFileSync(path, "utf8")) as AnchorFile;
+}

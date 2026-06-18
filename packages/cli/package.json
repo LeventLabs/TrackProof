@@ -13,6 +13,7 @@
     "!dist/**/*.test.*"
   ],
   "dependencies": {
+    "@trackproof/base": "0.0.0",
     "@trackproof/bitget": "0.0.0",
     "@trackproof/core": "0.0.0",
     "@trackproof/sdk": "0.0.0",
