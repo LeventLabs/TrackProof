@@ -3,6 +3,7 @@
   "references": [
     { "path": "packages/core" },
     { "path": "packages/bitget" },
+    { "path": "packages/base" },
     { "path": "packages/sdk" },
     { "path": "packages/skill" },
     { "path": "packages/cli" }

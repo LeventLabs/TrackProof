@@ -1,0 +1,10 @@
+{
+  "network": "base-sepolia",
+  "chainId": 84532,
+  "explorer": "https://sepolia.basescan.org",
+  "deployedAt": "2026-06-11",
+  "contracts": {
+    "Anchor": "0x290825Ee1124617649c527A2230881e63173519D",
+    "IdentityRegistry": "0xc785F1124d7C8e77aFF446B377C013fE4A2857F9"
+  }
+}
