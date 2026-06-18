@@ -2,6 +2,7 @@
 import { BitgetMarketData } from "@trackproof/bitget";
 import { openStore, readChain, TrackProof } from "@trackproof/sdk";
 import { verifyCapsule, verifyChain, type TradeDecisionBody } from "@trackproof/core";
+import { INSTALL_TARGETS, installSkill, isInstallTarget, type InstallTarget } from "@trackproof/skill";
 import { parseArgs } from "./args.js";
 
 const HOME = process.env.TRACKPROOF_HOME ?? ".trackproof";
@@ -77,6 +78,23 @@ async function cmdVerify(flags: Record<string, string | boolean>, withAnchor: bo
   );
 }
 
+function cmdInstall(flags: Record<string, string | boolean>): void {
+  const requested = FLAG(flags.target, "claude")
+    .split(",")
+    .map((t) => t.trim())
+    .filter((t) => t.length > 0);
+  const invalid = requested.filter((t) => !isInstallTarget(t));
+  if (invalid.length > 0) {
+    console.error(`Unknown --target: ${invalid.join(", ")}. Valid: ${INSTALL_TARGETS.join(", ")}.`);
+    process.exitCode = 1;
+    return;
+  }
+  const installed = installSkill(requested as InstallTarget[]);
+  console.log("Installed the TrackProof skill:");
+  for (const path of installed) console.log(`  ${path}`);
+  console.log("(MCP server registration ships with the MCP package — coming soon.)");
+}
+
 async function main(): Promise<void> {
   const { command, flags } = parseArgs(process.argv.slice(2));
 
@@ -93,8 +111,7 @@ async function main(): Promise<void> {
     case "verify":
       return cmdVerify(flags, Boolean(flags["with-anchor"]));
     case "install":
-      console.log("`install` (skill + MCP server) ships with the distribution package — coming soon.");
-      return;
+      return cmdInstall(flags);
     default:
       console.error(`Unknown command: ${command}\n`);
       console.log(HELP);

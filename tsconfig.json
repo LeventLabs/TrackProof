@@ -4,6 +4,7 @@
     { "path": "packages/core" },
     { "path": "packages/bitget" },
     { "path": "packages/sdk" },
+    { "path": "packages/skill" },
     { "path": "packages/cli" }
   ]
 }

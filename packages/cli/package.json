@@ -15,7 +15,8 @@
   "dependencies": {
     "@trackproof/bitget": "0.0.0",
     "@trackproof/core": "0.0.0",
-    "@trackproof/sdk": "0.0.0"
+    "@trackproof/sdk": "0.0.0",
+    "@trackproof/skill": "0.0.0"
   },
   "scripts": {
     "build": "tsc -b",
