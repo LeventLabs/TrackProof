@@ -5,6 +5,7 @@
     { "path": "packages/bitget" },
     { "path": "packages/base" },
     { "path": "packages/sdk" },
+    { "path": "packages/demo-agents" },
     { "path": "packages/skill" },
     { "path": "packages/cli" }
   ]

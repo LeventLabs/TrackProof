@@ -4,11 +4,13 @@ import { BitgetMarketData } from "@trackproof/bitget";
 import { anchorCapsules, capsuleLeaf, verifyCapsule, verifyChain, verifyCommitment, type TradeDecisionBody } from "@trackproof/core";
 import { loadAnchor, openStore, readChain, saveAnchor, TrackProof } from "@trackproof/sdk";
 import { INSTALL_TARGETS, installSkill, isInstallTarget, type InstallTarget } from "@trackproof/skill";
+import { anchorRun, formatEvidenceReport, gatherEvidence, runAgents } from "@trackproof/demo-agents";
 import { parseArgs } from "./args.js";
 
 const HOME = process.env.TRACKPROOF_HOME ?? ".trackproof";
 const ANCHOR_ADDRESS = (process.env.TRACKPROOF_ANCHOR_ADDRESS ??
   "0x290825Ee1124617649c527A2230881e63173519D") as `0x${string}`;
+const DEMO_HOME = process.env.TRACKPROOF_DEMO_HOME ?? ".trackproof-demo";
 
 const HELP = `trackproof — verifiable track records for AI trading agents
 
@@ -17,6 +19,8 @@ Usage:
   trackproof anchor                            Merkle-root the chain and anchor it on Base
   trackproof replay  [--last]                  Local G1 + G3 verification
   trackproof verify  [--last] [--with-anchor]  Adds G2 (on-chain commitment) with --with-anchor
+  trackproof demo    [--no-anchor]             Run the 3 demo agents over live history, then anchor on Base
+  trackproof evidence                          Print verifiable usage evidence (capsules, fakes, anchors)
   trackproof install --target claude|codex|openclaw
   trackproof --help
 
@@ -145,6 +149,54 @@ async function cmdAnchor(): Promise<void> {
   console.log(`Saved ${proofs.size} inclusion proofs to ${HOME}/anchor.json.`);
 }
 
+async function cmdDemo(flags: Record<string, string | boolean>): Promise<void> {
+  const source = new BitgetMarketData();
+  const num = (v: string | boolean | undefined): number | undefined =>
+    typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v)) ? Number(v) : undefined;
+  const lookbackHours = num(flags["lookback-hours"]);
+  const maxPerAgent = num(flags["max-per-agent"]);
+  const step = num(flags.step);
+
+  console.log("Running the demo agents over live Bitget history (simulation / paper only)…");
+  const runs = await runAgents({
+    baseDir: DEMO_HOME,
+    source,
+    ...(lookbackHours !== undefined ? { lookbackMs: lookbackHours * 60 * 60 * 1000 } : {}),
+    ...(maxPerAgent !== undefined ? { maxPerAgent } : {}),
+    ...(step !== undefined ? { step } : {}),
+  });
+  let total = 0;
+  for (const r of runs) {
+    total += r.emitted;
+    console.log(`  ${r.name.padEnd(16)} ${String(r.emitted).padStart(5)} capsules  [${r.tier}]`);
+  }
+  console.log(`Emitted ${total} capsules across ${runs.length} agents into ${DEMO_HOME}/.`);
+
+  if (flags["no-anchor"]) {
+    console.log("Skipped anchoring (--no-anchor). Omit the flag to anchor each chain on Base.");
+    return;
+  }
+  const privateKey = process.env.DEPLOYER_PRIVATE_KEY as `0x${string}` | undefined;
+  if (!privateKey) {
+    console.error("Set DEPLOYER_PRIVATE_KEY (a funded Base Sepolia key) to anchor, or pass --no-anchor.");
+    process.exitCode = 1;
+    return;
+  }
+  const anchorStore = new BaseAnchorStore({ anchorAddress: ANCHOR_ADDRESS, privateKey });
+  console.log(`Anchoring each agent's chain on Base (${ANCHOR_ADDRESS})…`);
+  for (const a of await anchorRun(anchorStore, { baseDir: DEMO_HOME })) {
+    console.log(`  ${a.key.padEnd(12)} root ${a.root.slice(0, 16)}… block ${a.block} (${a.capsules} capsules, ${a.proofs} proofs)`);
+  }
+  console.log("Done. Run `trackproof evidence` to print the verifiable usage evidence.");
+}
+
+async function cmdEvidence(): Promise<void> {
+  const source = new BitgetMarketData();
+  const anchorStore = new BaseAnchorStore({ anchorAddress: ANCHOR_ADDRESS });
+  const report = await gatherEvidence({ baseDir: DEMO_HOME, source, anchorStore });
+  console.log(formatEvidenceReport(report));
+}
+
 async function main(): Promise<void> {
   const { command, flags } = parseArgs(process.argv.slice(2));
 
@@ -162,6 +214,10 @@ async function main(): Promise<void> {
       return cmdVerify(flags, Boolean(flags["with-anchor"]));
     case "anchor":
       return cmdAnchor();
+    case "demo":
+      return cmdDemo(flags);
+    case "evidence":
+      return cmdEvidence();
     case "install":
       return cmdInstall(flags);
     default:

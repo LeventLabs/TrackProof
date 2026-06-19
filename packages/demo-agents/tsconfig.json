@@ -8,9 +8,7 @@
     { "path": "../core" },
     { "path": "../bitget" },
     { "path": "../base" },
-    { "path": "../sdk" },
-    { "path": "../demo-agents" },
-    { "path": "../skill" }
+    { "path": "../sdk" }
   ],
   "include": ["src/**/*.ts"]
 }

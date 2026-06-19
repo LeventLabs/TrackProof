@@ -1,12 +1,16 @@
 {
-  "name": "@trackproof/cli",
+  "name": "@trackproof/demo-agents",
   "version": "0.0.0",
-  "description": "TrackProof CLI: emit and verify DecisionCapsules.",
+  "description": "TrackProof demo agents + verifiable-evidence runner (simulation / paper only).",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.js",
-  "bin": {
-    "trackproof": "./dist/index.js"
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "files": [
     "dist",
@@ -16,9 +20,7 @@
     "@trackproof/base": "0.0.0",
     "@trackproof/bitget": "0.0.0",
     "@trackproof/core": "0.0.0",
-    "@trackproof/demo-agents": "0.0.0",
-    "@trackproof/sdk": "0.0.0",
-    "@trackproof/skill": "0.0.0"
+    "@trackproof/sdk": "0.0.0"
   },
   "scripts": {
     "build": "tsc -b",
