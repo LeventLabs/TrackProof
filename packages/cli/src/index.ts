@@ -1,10 +1,11 @@
 #!/usr/bin/env node
+import { writeFileSync } from "node:fs";
 import { BaseAnchorStore } from "@trackproof/base";
 import { BitgetMarketData } from "@trackproof/bitget";
 import { anchorCapsules, capsuleLeaf, verifyCapsule, verifyChain, verifyCommitment, type TradeDecisionBody } from "@trackproof/core";
 import { loadAnchor, openStore, readChain, saveAnchor, TrackProof } from "@trackproof/sdk";
 import { INSTALL_TARGETS, installSkill, isInstallTarget, type InstallTarget } from "@trackproof/skill";
-import { anchorRun, formatEvidenceReport, gatherEvidence, runAgents } from "@trackproof/demo-agents";
+import { anchorRun, formatEvidenceHtml, formatEvidenceReport, gatherEvidence, runAgents } from "@trackproof/demo-agents";
 import { parseArgs } from "./args.js";
 
 const HOME = process.env.TRACKPROOF_HOME ?? ".trackproof";
@@ -20,7 +21,7 @@ Usage:
   trackproof replay  [--last]                  Local G1 + G3 verification
   trackproof verify  [--last] [--with-anchor]  Adds G2 (on-chain commitment) with --with-anchor
   trackproof demo    [--no-anchor]             Run the 3 demo agents over live history, then anchor on Base
-  trackproof evidence                          Print verifiable usage evidence (capsules, fakes, anchors)
+  trackproof evidence [--html <file>] [--json] Verifiable usage evidence (text · standalone HTML · JSON)
   trackproof install --target claude|codex|openclaw
   trackproof --help
 
@@ -190,10 +191,19 @@ async function cmdDemo(flags: Record<string, string | boolean>): Promise<void> {
   console.log("Done. Run `trackproof evidence` to print the verifiable usage evidence.");
 }
 
-async function cmdEvidence(): Promise<void> {
+async function cmdEvidence(flags: Record<string, string | boolean>): Promise<void> {
   const source = new BitgetMarketData();
   const anchorStore = new BaseAnchorStore({ anchorAddress: ANCHOR_ADDRESS });
   const report = await gatherEvidence({ baseDir: DEMO_HOME, source, anchorStore });
+  if (typeof flags.html === "string") {
+    writeFileSync(flags.html, formatEvidenceHtml(report, { anchorContract: ANCHOR_ADDRESS }));
+    console.log(`Wrote the evidence page to ${flags.html} — open it in a browser.`);
+    return;
+  }
+  if (flags.json) {
+    console.log(JSON.stringify(report, null, 2));
+    return;
+  }
   console.log(formatEvidenceReport(report));
 }
 
@@ -217,7 +227,7 @@ async function main(): Promise<void> {
     case "demo":
       return cmdDemo(flags);
     case "evidence":
-      return cmdEvidence();
+      return cmdEvidence(flags);
     case "install":
       return cmdInstall(flags);
     default:
