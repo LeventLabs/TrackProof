@@ -58,7 +58,7 @@ export const DEMO_AGENTS: DemoAgent[] = [
   },
 ];
 
-/** The single Tier-2 (strategy-reproducible) agent key (PROJECT_CONTEXT §4.6; never generalized). */
+/** The single Tier-2 (strategy-reproducible) agent key; the badge is never generalized. */
 export const TIER2_AGENT_KEY = "breakout";
 
 /** Look up a demo agent by key. */

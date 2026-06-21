@@ -14,7 +14,7 @@ import { STRATEGIES, strategyHash, type Action, type StrategySpec } from "./stra
  *
  * This is an OPTIONAL badge layered on top of Tier-1. Only the one deterministic demo agent
  * (Breakout) emits `repro`, so only it is Tier-2 — the mechanism is never generalized to the
- * notarized (LLM-style) agents (PROJECT_CONTEXT §4.6).
+ * notarized (LLM-style) agents.
  */
 
 /** Strategy lookup by the committed strategy_hash, so a verifier can find which fn to re-run. */

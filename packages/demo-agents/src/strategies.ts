@@ -104,7 +104,7 @@ export const meanReversion: Strategy = (candles, seed) => {
 /**
  * Breakout (Tier-2, reproducible): long when the last close breaks the prior window high,
  * short when it breaks the prior low. Fully deterministic and trivial to re-derive — this is
- * the ONE agent that carries a Tier-2 `repro` badge (PROJECT_CONTEXT §4.6; never generalized).
+ * the ONE agent that carries a Tier-2 `repro` badge; the badge is never generalized.
  */
 export const breakout: Strategy = (candles, seed) => {
   if (candles.length < 4) return null;
