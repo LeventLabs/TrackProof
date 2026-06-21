@@ -43,6 +43,8 @@ export interface AgentEvidence {
   anchorBlock?: number;
   inclusionVerified: boolean;
   tier2Badge: boolean;
+  /** Cumulative mark-to-market P&L over the sampled settled trades, in chain order (descriptive). */
+  pnlSeries: number[];
 }
 
 export interface FakeEvidence {
@@ -111,11 +113,19 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
     totalCapsules += chain.length;
     const chk = verifyChain(chain);
 
+    const pnlSeries: number[] = [];
+    let cumulativePnl = 0;
     for (const cap of sample(chain, perAgentVerify)) {
       const result = await verifyCapsule(cap, config.source);
       sampled++;
       if (result.verdict === "PASSED") verifiedPassed++;
-      if (result.kind === "trade_decision" && result.outcome === "settled") settled++;
+      if (result.kind === "trade_decision" && result.outcome === "settled") {
+        settled++;
+        if (result.pnl !== undefined) {
+          cumulativePnl += Number(result.pnl);
+          pnlSeries.push(Number(cumulativePnl.toFixed(6)));
+        }
+      }
     }
 
     let anchored = false;
@@ -154,6 +164,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
       anchorBlock,
       inclusionVerified,
       tier2Badge: t2.badge,
+      pnlSeries,
     });
   }
 

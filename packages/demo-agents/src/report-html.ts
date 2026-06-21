@@ -41,6 +41,32 @@ function blockLink(block: number | undefined, explorer: string): string {
   return `<a href="${explorer}/block/${block}" target="_blank" rel="noopener">#${block}</a>`;
 }
 
+/** Inline SVG sparkline of a cumulative P&L series — green if it ends up, red if down. No script. */
+function sparkline(series: number[]): string {
+  if (series.length < 2) {
+    return `<div class="spark-wrap"><div class="spark-label">sampled P&amp;L — too few settled samples</div></div>`;
+  }
+  const w = 260;
+  const h = 44;
+  const pad = 3;
+  const min = Math.min(0, ...series);
+  const max = Math.max(0, ...series);
+  const range = max - min || 1;
+  const x = (i: number): number => pad + (i / (series.length - 1)) * (w - 2 * pad);
+  const y = (v: number): number => h - pad - ((v - min) / range) * (h - 2 * pad);
+  const pts = series.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const last = series[series.length - 1]!;
+  const cls = last >= 0 ? "ok" : "bad";
+  const net = (last >= 0 ? "+" : "") + last.toFixed(2);
+  return `<div class="spark-wrap">
+        <div class="spark-label">sampled mark-to-market P&amp;L (${series.length} settled) · net <span class="${cls}">${esc(net)}</span></div>
+        <svg class="spark ${cls}" viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" role="img" aria-label="cumulative sampled P&amp;L curve">
+          <line x1="0" y1="${y(0).toFixed(1)}" x2="${w}" y2="${y(0).toFixed(1)}" class="spark-zero"/>
+          <polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+      </div>`;
+}
+
 /**
  * Render an EvidenceReport as a single self-contained HTML page (inline CSS, no external
  * resources) a judge can open from `file://` with no server. Simulation / paper only.
@@ -81,6 +107,7 @@ export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOp
         <div class="kv"><span>anchored (G2)</span>${a.anchored ? `block ${blockLink(a.anchorBlock, explorer)}` : `<span class="muted">not anchored</span>`}</div>
         <div class="kv"><span>merkle root</span><code>${root}</code></div>
         <div class="kv"><span>inclusion proof</span>${a.inclusionVerified ? `<span class="ok">verified ✓</span>` : `<span class="bad">unverified ✗</span>`}</div>
+        ${sparkline(a.pnlSeries)}
       </div>`;
     })
     .join("\n");
@@ -136,6 +163,10 @@ export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOp
   .card .name { font-weight:600; }
   .kv { display:flex; justify-content:space-between; gap:10px; padding:4px 0; font-size:13px; border-top:1px solid var(--line); }
   .kv:first-of-type { border-top:none; } .kv span:first-child { color:var(--muted); }
+  .spark-wrap { margin-top:10px; padding-top:8px; border-top:1px solid var(--line); }
+  .spark-label { color:var(--muted); font-size:12px; margin-bottom:5px; }
+  .spark { display:block; } .spark.ok { color:var(--ok); } .spark.bad { color:var(--bad); }
+  .spark-zero { stroke:var(--line); stroke-dasharray:3 3; }
   .summary { display:flex; flex-wrap:wrap; gap:24px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px; }
   .summary .stat b { font-size:22px; display:block; } .summary .stat span { color:var(--muted); font-size:13px; }
   .fake { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:12px; background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--bad); border-radius:8px; padding:10px 14px; margin-bottom:8px; }

@@ -7,8 +7,8 @@ function fakeReport(): EvidenceReport {
   return {
     generatedAt: Date.UTC(2026, 5, 21),
     agents: [
-      { key: "breakout", name: "Breakout Bo", tier: "reproducible", agentId: "ab".repeat(32), capsules: 327, chainOk: true, enrolledAt: Date.UTC(2026, 5, 1), anchored: true, anchorRoot: "cd".repeat(32), anchorBlock: 43063818, inclusionVerified: true, tier2Badge: true },
-      { key: "momentum", name: "Momentum Mara", tier: "notarized", agentId: "ef".repeat(32), capsules: 750, chainOk: true, enrolledAt: Date.UTC(2026, 5, 2), anchored: true, anchorRoot: "12".repeat(32), anchorBlock: 43063816, inclusionVerified: true, tier2Badge: false },
+      { key: "breakout", name: "Breakout Bo", tier: "reproducible", agentId: "ab".repeat(32), capsules: 327, chainOk: true, enrolledAt: Date.UTC(2026, 5, 1), anchored: true, anchorRoot: "cd".repeat(32), anchorBlock: 43063818, inclusionVerified: true, tier2Badge: true, pnlSeries: [1, 2, 1.5, 3, 4] },
+      { key: "momentum", name: "Momentum Mara", tier: "notarized", agentId: "ef".repeat(32), capsules: 750, chainOk: true, enrolledAt: Date.UTC(2026, 5, 2), anchored: true, anchorRoot: "12".repeat(32), anchorBlock: 43063816, inclusionVerified: true, tier2Badge: false, pnlSeries: [-1, -2, -1, -3] },
     ],
     fakes: [
       { key: "fab", claim: "+412% ROI (fabricated prices)", failureClass: "G1", caught: 4, detail: "4/4 capsules failed G1" },
@@ -38,4 +38,12 @@ test("formatEvidenceHtml ranks by capsules, escapes data, and links on-chain", (
   assert.match(html, /block\/43063816/);
   assert.match(html, /not investment advice/i);
   assert.match(html, /Tier-2 reproducible ✓/);
+});
+
+test("formatEvidenceHtml draws P&L sparklines (green up / red down), still no script", () => {
+  const html = formatEvidenceHtml(fakeReport());
+  assert.match(html, /<polyline points=/);
+  assert.match(html, /<svg class="spark ok"/); // Breakout ends positive
+  assert.match(html, /<svg class="spark bad"/); // Momentum ends negative
+  assert.equal(/<script\b/i.test(html), false);
 });
