@@ -243,14 +243,14 @@ ${fakes}
 ${handoffRows}
     </tbody>
   </table>
-  <p class="muted" style="margin-top:10px;font-size:13px">Each handoff is a verifiable <code>memory_purchase</code> capsule on the buyer's chain. Payments settle through a local x402 <b>stub</b> (the <code>stub:</code> prefix is honest); live x402 settlement is on the roadmap.</p>
+  <p class="muted" style="margin-top:10px;font-size:13px">Each handoff is a verifiable <code>memory_purchase</code> capsule on the buyer's chain. Payments settle through a local x402 <b>stub</b> (the <code>stub:</code> prefix is honest); a real on-chain x402 USDC settlement is demonstrated in <code>examples/x402-live</code>.</p>
 
   <h2>Challenge any record</h2>
-  <p class="muted">You don't have to trust this page. Re-fetch the data, replay it, and check the on-chain commitment yourself — keyless:</p>
+  <p class="muted">You don't have to trust this page. Re-fetch every decision from Bitget, re-walk the hash-chains, and re-check the on-chain roots + heads yourself — <b>keyless</b>, against the live published data:</p>
   <pre class="cmds"><span class="c"># git clone https://github.com/LeventLabs/TrackProof &amp;&amp; cd TrackProof</span>
 npm install &amp;&amp; npm run build
-npm run trackproof -- demo                          <span class="c"># reproduce the agents + evidence</span>
-npm run trackproof -- verify --last --with-anchor   <span class="c"># G1 replay + G3 chain + on-chain G2</span></pre>
+npm run trackproof -- evidence    <span class="c"># keyless: re-verifies all 3 agents (G1 + G2 inclusion/heads + G3)</span></pre>
+  <p class="muted" style="margin-top:8px;font-size:13px">To reproduce the agents from scratch (emit → anchor → commit heads), run <code>npm run trackproof -- demo</code> with a funded Base Sepolia key, then <code>verify --last --with-anchor</code>.</p>
 
   <footer>
     P&amp;L is descriptive, not execution-realistic. TrackProof proves the integrity of an agent's
