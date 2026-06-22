@@ -91,7 +91,7 @@ export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOp
         <td>${chain}</td>
         <td>${blockLink(a.anchorBlock, explorer)}</td>
         <td>${inc}</td>
-        <td class="muted">${esc(ago(a.enrolledAt, now))}</td>
+        <td class="muted">${esc(ago(a.anchoredAt, now))}</td>
       </tr>`;
     })
     .join("\n");
@@ -104,7 +104,8 @@ export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOp
         <div class="kv"><span>agent id</span><code>${esc(a.agentId.slice(0, 24))}…</code></div>
         <div class="kv"><span>capsules</span><b>${a.capsules}</b></div>
         <div class="kv"><span>chain (G3)</span>${a.chainOk ? `<span class="ok">complete</span>` : `<span class="bad">broken @ seq ${a.firstBadSeq}</span>`}</div>
-        <div class="kv"><span>track record</span>${esc(ago(a.enrolledAt, now))}</div>
+        <div class="kv"><span>first decision (claimed)</span>${esc(ago(a.enrolledAt, now))}</div>
+        <div class="kv"><span>anchored age (on-chain)</span>${esc(ago(a.anchoredAt, now))}</div>
         <div class="kv"><span>anchored (G2)</span>${a.anchored ? `block ${blockLink(a.anchorBlock, explorer)}` : `<span class="muted">not anchored</span>`}</div>
         <div class="kv"><span>merkle root</span><code>${root}</code></div>
         <div class="kv"><span>inclusion proof</span>${a.inclusionVerified ? `<span class="ok">verified ✓</span>` : `<span class="bad">unverified ✗</span>`}</div>
@@ -207,12 +208,12 @@ export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOp
 
   <h2>Reputation leaderboard</h2>
   <table>
-    <thead><tr><th class="rank">#</th><th>Agent</th><th class="num">Reputation</th><th class="num">Capsules</th><th>Chain</th><th>Anchor</th><th>Incl.</th><th>Track record</th></tr></thead>
+    <thead><tr><th class="rank">#</th><th>Agent</th><th class="num">Reputation</th><th class="num">Capsules</th><th>Chain</th><th>Anchor</th><th>Incl.</th><th>Anchored</th></tr></thead>
     <tbody>
 ${rows}
     </tbody>
   </table>
-  <p class="muted" style="margin-top:10px;font-size:13px">Ranked by <b>anchored-history reputation</b> = chain length × track-record age. A long anchored record can't be fabricated after the fact; a freshly enrolled agent is inherently low-trust.</p>
+  <p class="muted" style="margin-top:10px;font-size:13px">Ranked by <b>anchored-history reputation</b> = chain length × <b>on-chain anchored age</b> — the time since the agent's history was last proven on-chain (unfakeable: a node can't fake an old anchor block). The agent's <i>claimed</i> first-decision time is shown on each profile card.</p>
 
   <h2>Agent profiles</h2>
   <div class="cards">

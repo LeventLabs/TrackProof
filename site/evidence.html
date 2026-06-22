@@ -55,7 +55,7 @@
   <header>
     <h1>TrackProof — verifiable track records</h1>
     <p class="sub">Re-fetched market data (G1) · on-chain commitment before outcome (G2) · complete hash-chain (G3). Simulation / paper only.</p>
-    <p class="gen">Generated 2026-06-22T18:58:03.058Z · anchored on <a href="https://sepolia.basescan.org/address/0x290825Ee1124617649c527A2230881e63173519D" target="_blank" rel="noopener">0x290825Ee1124617649c527A2230881e63173519D</a></p>
+    <p class="gen">Generated 2026-06-22T19:06:47.385Z · anchored on <a href="https://sepolia.basescan.org/address/0x290825Ee1124617649c527A2230881e63173519D" target="_blank" rel="noopener">0x290825Ee1124617649c527A2230881e63173519D</a></p>
   </header>
 
   <div class="pills">
@@ -69,41 +69,41 @@
 
   <h2>Reputation leaderboard</h2>
   <table>
-    <thead><tr><th class="rank">#</th><th>Agent</th><th class="num">Reputation</th><th class="num">Capsules</th><th>Chain</th><th>Anchor</th><th>Incl.</th><th>Track record</th></tr></thead>
+    <thead><tr><th class="rank">#</th><th>Agent</th><th class="num">Reputation</th><th class="num">Capsules</th><th>Chain</th><th>Anchor</th><th>Incl.</th><th>Anchored</th></tr></thead>
     <tbody>
 <tr>
         <td class="rank">1</td>
         <td>Reversion Rey <span class="badge tier1">Tier-1 notarized</span></td>
-        <td class="num"><b>5508</b></td>
+        <td class="num"><b>857</b></td>
         <td class="num">852</td>
         <td><span class="ok">OK</span></td>
         <td><a href="https://sepolia.basescan.org/block/43193173" target="_blank" rel="noopener">#43193173</a></td>
         <td><span class="ok">✓</span></td>
-        <td class="muted">5d 11h ago</td>
+        <td class="muted">9m ago</td>
       </tr>
 <tr>
         <td class="rank">2</td>
         <td>Momentum Mara <span class="badge tier1">Tier-1 notarized</span></td>
-        <td class="num"><b>4981</b></td>
+        <td class="num"><b>776</b></td>
         <td class="num">771</td>
         <td><span class="ok">OK</span></td>
         <td><a href="https://sepolia.basescan.org/block/43193172" target="_blank" rel="noopener">#43193172</a></td>
         <td><span class="ok">✓</span></td>
-        <td class="muted">5d 11h ago</td>
+        <td class="muted">9m ago</td>
       </tr>
 <tr>
         <td class="rank">3</td>
         <td>Breakout Bo <span class="badge tier2">Tier-2 reproducible ✓</span></td>
-        <td class="num"><b>2198</b></td>
+        <td class="num"><b>342</b></td>
         <td class="num">340</td>
         <td><span class="ok">OK</span></td>
         <td><a href="https://sepolia.basescan.org/block/43193174" target="_blank" rel="noopener">#43193174</a></td>
         <td><span class="ok">✓</span></td>
-        <td class="muted">5d 11h ago</td>
+        <td class="muted">9m ago</td>
       </tr>
     </tbody>
   </table>
-  <p class="muted" style="margin-top:10px;font-size:13px">Ranked by <b>anchored-history reputation</b> = chain length × track-record age. A long anchored record can't be fabricated after the fact; a freshly enrolled agent is inherently low-trust.</p>
+  <p class="muted" style="margin-top:10px;font-size:13px">Ranked by <b>anchored-history reputation</b> = chain length × <b>on-chain anchored age</b> — the time since the agent's history was last proven on-chain (unfakeable: a node can't fake an old anchor block). The agent's <i>claimed</i> first-decision time is shown on each profile card.</p>
 
   <h2>Agent profiles</h2>
   <div class="cards">
@@ -112,7 +112,8 @@
         <div class="kv"><span>agent id</span><code>61d6f0f302ee05f905b0d29b…</code></div>
         <div class="kv"><span>capsules</span><b>852</b></div>
         <div class="kv"><span>chain (G3)</span><span class="ok">complete</span></div>
-        <div class="kv"><span>track record</span>5d 11h ago</div>
+        <div class="kv"><span>first decision (claimed)</span>5d 11h ago</div>
+        <div class="kv"><span>anchored age (on-chain)</span>9m ago</div>
         <div class="kv"><span>anchored (G2)</span>block <a href="https://sepolia.basescan.org/block/43193173" target="_blank" rel="noopener">#43193173</a></div>
         <div class="kv"><span>merkle root</span><code>c85e2b8460c8f422410c14d3…</code></div>
         <div class="kv"><span>inclusion proof</span><span class="ok">verified ✓</span></div>
@@ -129,7 +130,8 @@
         <div class="kv"><span>agent id</span><code>373e381141b1d17c26c69148…</code></div>
         <div class="kv"><span>capsules</span><b>771</b></div>
         <div class="kv"><span>chain (G3)</span><span class="ok">complete</span></div>
-        <div class="kv"><span>track record</span>5d 11h ago</div>
+        <div class="kv"><span>first decision (claimed)</span>5d 11h ago</div>
+        <div class="kv"><span>anchored age (on-chain)</span>9m ago</div>
         <div class="kv"><span>anchored (G2)</span>block <a href="https://sepolia.basescan.org/block/43193172" target="_blank" rel="noopener">#43193172</a></div>
         <div class="kv"><span>merkle root</span><code>8a1efb23846a87d3f66cfe9f…</code></div>
         <div class="kv"><span>inclusion proof</span><span class="ok">verified ✓</span></div>
@@ -146,7 +148,8 @@
         <div class="kv"><span>agent id</span><code>592423fc4e9d6a9b856c9c03…</code></div>
         <div class="kv"><span>capsules</span><b>340</b></div>
         <div class="kv"><span>chain (G3)</span><span class="ok">complete</span></div>
-        <div class="kv"><span>track record</span>5d 11h ago</div>
+        <div class="kv"><span>first decision (claimed)</span>5d 11h ago</div>
+        <div class="kv"><span>anchored age (on-chain)</span>9m ago</div>
         <div class="kv"><span>anchored (G2)</span>block <a href="https://sepolia.basescan.org/block/43193174" target="_blank" rel="noopener">#43193174</a></div>
         <div class="kv"><span>merkle root</span><code>04df767a000f0b27cb362872…</code></div>
         <div class="kv"><span>inclusion proof</span><span class="ok">verified ✓</span></div>

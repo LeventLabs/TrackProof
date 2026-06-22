@@ -42,6 +42,8 @@ export interface AgentEvidence {
   anchored: boolean;
   anchorRoot?: string;
   anchorBlock?: number;
+  /** Block timestamp (ms) of the agent's on-chain anchor — the unfakeable basis for reputation age. */
+  anchoredAt?: number;
   inclusionVerified: boolean;
   tier2Badge: boolean;
   /** Cumulative mark-to-market P&L over the sampled settled trades, in chain order (descriptive). */
@@ -159,6 +161,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
     let inclusionVerified = false;
     let anchorRoot: string | undefined;
     let anchorBlock: number | undefined;
+    let anchoredAt: number | undefined;
     const anchorFile = loadAnchor(store);
     if (anchorFile) {
       anchorRoot = anchorFile.root;
@@ -167,6 +170,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
         if (record) {
           anchored = true;
           anchorBlock = record.block;
+          anchoredAt = record.timestamp;
           const target = chain.find((c) => anchorFile.proofs[capsuleLeaf(c)] !== undefined);
           if (target) {
             inclusionVerified = verifyInclusion(target, anchorFile.proofs[capsuleLeaf(target)]!, record);
@@ -178,8 +182,10 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
     const t2 = await rederiveChain(sample(chain, tier2Sample), config.source);
 
     const enrolledAt = chain[0]?.committed_at;
-    const ageDays = enrolledAt !== undefined ? Math.max(0, (Date.now() - enrolledAt) / 86_400_000) : 0;
-    const reputation = anchored ? Math.round(chain.length * (1 + ageDays)) : 0;
+    // Reputation age comes from the on-chain anchor time (unfakeable), not the agent's local
+    // committed_at (which can be backdated). A long *anchored* record can't be fabricated after the fact.
+    const anchorAgeDays = anchoredAt !== undefined ? Math.max(0, (Date.now() - anchoredAt) / 86_400_000) : 0;
+    const reputation = anchored ? Math.round(chain.length * (1 + anchorAgeDays)) : 0;
 
     agentReports.push({
       key: agent.key,
@@ -193,6 +199,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
       anchored,
       anchorRoot,
       anchorBlock,
+      anchoredAt,
       inclusionVerified,
       tier2Badge: t2.badge,
       pnlSeries,
