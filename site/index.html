@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TrackProof — verifiable track records for AI trading agents</title>
+<meta name="description" content="A track-record notary for AI trading agents. Re-fetched market data, on-chain commitment before the outcome, and a complete hash-chain — prove real alpha, catch fake ROI. Simulation / paper only.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1419'/%3E%3Cpath d='M9 16.5l4.5 4.5L23 11' fill='none' stroke='%233fb950' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://trackproof.co">
+<meta property="og:title" content="TrackProof — verifiable track records for AI trading agents">
+<meta property="og:description" content="Prove real alpha, catch fake ROI. Re-fetched data (G1) · on-chain commitment before outcome (G2) · complete hash-chain (G3). Live on Base Sepolia. Simulation / paper only.">
+<meta property="og:image" content="https://trackproof.co/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root { --bg:#0f1419; --panel:#1a212b; --line:#2a3441; --fg:#e6edf3; --muted:#8b98a9; --ok:#3fb950; --bad:#f85149; --accent:#58a6ff; }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.9em; }
+  .wrap { max-width:1000px; margin:0 auto; padding:0 20px; }
+  nav { display:flex; align-items:center; justify-content:space-between; padding:18px 20px; max-width:1000px; margin:0 auto; }
+  nav .brand { font-weight:700; letter-spacing:-.01em; display:flex; align-items:center; gap:9px; }
+  nav .brand .mark { width:22px; height:22px; }
+  nav .links a { color:var(--muted); margin-left:20px; font-size:14px; } nav .links a:hover { color:var(--fg); }
+  .hero { text-align:center; padding:64px 0 40px; }
+  .hero h1 { font-size:clamp(30px,5vw,52px); line-height:1.08; letter-spacing:-.025em; margin:0 0 16px; }
+  .hero h1 .g { color:var(--ok); } .hero h1 .r { color:var(--bad); }
+  .hero p.lead { font-size:clamp(16px,2.2vw,20px); color:var(--muted); max-width:680px; margin:0 auto 28px; }
+  .pills { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:28px; }
+  .pill { font-size:13px; padding:5px 12px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+  .pill.live { color:var(--ok); border-color:rgba(63,185,80,.4); }
+  .cta { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .btn { display:inline-block; padding:12px 22px; border-radius:9px; font-weight:600; font-size:15px; border:1px solid var(--line); }
+  .btn.primary { background:var(--accent); color:#06121f; border-color:var(--accent); } .btn.primary:hover { text-decoration:none; filter:brightness(1.08); }
+  .btn.ghost { color:var(--fg); } .btn.ghost:hover { text-decoration:none; border-color:var(--muted); }
+  section { padding:44px 0; border-top:1px solid var(--line); }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin:0 0 22px; text-align:center; }
+  .problem { text-align:center; font-size:clamp(20px,3vw,28px); line-height:1.4; letter-spacing:-.01em; }
+  .problem .r { color:var(--bad); } .problem .g { color:var(--ok); }
+  .grid3 { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:22px; }
+  .card .tag { font-family:ui-monospace,monospace; font-weight:700; color:var(--accent); font-size:14px; }
+  .card h3 { margin:8px 0 8px; font-size:18px; }
+  .card p { color:var(--muted); margin:0; font-size:15px; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:16px; text-align:center; }
+  .stat b { display:block; font-size:30px; letter-spacing:-.02em; } .stat span { color:var(--muted); font-size:13px; }
+  .boundary { background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--accent); border-radius:10px; padding:20px 24px; color:var(--muted); }
+  .boundary b { color:var(--fg); }
+  table.contracts { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  table.contracts td { padding:11px 14px; border-bottom:1px solid var(--line); font-size:14px; } table.contracts tr:last-child td { border-bottom:none; }
+  table.contracts td:first-child { color:var(--muted); }
+  pre { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px; overflow:auto; font-size:13.5px; line-height:1.7; }
+  pre .c { color:var(--muted); }
+  footer { border-top:1px solid var(--line); padding:28px 0 48px; color:var(--muted); font-size:13px; text-align:center; }
+  footer a { color:var(--muted); } footer a:hover { color:var(--fg); }
+</style>
+</head>
+<body>
+<nav>
+  <span class="brand">
+    <svg class="mark" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#1a212b"/><path d="M9 16.5l4.5 4.5L23 11" fill="none" stroke="#3fb950" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    TrackProof
+  </span>
+  <span class="links">
+    <a href="#how">How it works</a>
+    <a href="evidence.html">Live evidence</a>
+    <a href="https://github.com/LeventLabs/TrackProof" target="_blank" rel="noopener">GitHub</a>
+  </span>
+</nav>
+
+<div class="wrap">
+  <header class="hero">
+    <h1>Prove <span class="g">real alpha</span>.<br>Catch <span class="r">fake ROI</span>.</h1>
+    <p class="lead">TrackProof is a track-record notary for AI trading agents. Every decision becomes a signed, replayable, on-chain-committed receipt — so honest agents can prove their performance, and a fabricated “+412%” gets caught.</p>
+    <div class="pills">
+      <span class="pill live">● Live on Base Sepolia</span>
+      <span class="pill">Simulation / paper only</span>
+      <span class="pill">No API keys — public data</span>
+    </div>
+    <div class="cta">
+      <a class="btn primary" href="evidence.html">View live evidence →</a>
+      <a class="btn ghost" href="https://github.com/LeventLabs/TrackProof" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </header>
+
+  <section>
+    <p class="problem">Anyone can claim <span class="r">+412%</span> with a screenshot.<br>Nobody can independently verify the trades ever happened.<br><span class="g">TrackProof can.</span></p>
+  </section>
+
+  <section id="how">
+    <h2>Three independent guarantees</h2>
+    <div class="grid3">
+      <div class="card">
+        <span class="tag">G1</span><h3>Authentic data</h3>
+        <p>Every decision pins real, re-fetchable market history. Verification re-fetches it from Bitget and confirms the agent acted on prices that actually printed. Fabricated inputs fail.</p>
+      </div>
+      <div class="card">
+        <span class="tag">G2</span><h3>Decision before outcome</h3>
+        <p>Each capsule is committed to an on-chain Merkle anchor on Base. A trade only counts if it was anchored <em>before</em> its outcome window began. Backdating fails.</p>
+      </div>
+      <div class="card">
+        <span class="tag">G3</span><h3>Complete history</h3>
+        <p>Capsules form a per-agent hash chain from an on-chain enrollment genesis. Quietly deleting a losing trade breaks the chain and is detected.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it proves — and what it doesn't</h2>
+    <p class="boundary">TrackProof certifies the <b>integrity of an agent's ledger</b>, not the soundness of its reasoning. It proves: <b>“for any agent enrolled since block T₀, here is its complete, tamper-evident, decision-time-committed ledger, every trade settled against real market data.”</b> It does not prove the reasoning is correct, and it can't prove an operator didn't also run agents they never enrolled — so reputation weighs <b>anchored-history age and length</b>. P&amp;L is descriptive, not execution-realistic.</p>
+  </section>
+
+  <section>
+    <h2>A live evidence run</h2>
+    <div class="stats">
+      <div class="stat"><b>1,903</b><span>capsules notarized</span></div>
+      <div class="stat"><b>3</b><span>agents, anchored on Base</span></div>
+      <div class="stat"><b>60/60</b><span>sampled decisions re-verified</span></div>
+      <div class="stat"><b>5/5</b><span>seeded fakes caught</span></div>
+      <div class="stat"><b>3/3</b><span>on-chain inclusion proofs</span></div>
+    </div>
+    <p style="text-align:center;margin-top:24px"><a class="btn ghost" href="evidence.html">Open the verifiable evidence page →</a></p>
+  </section>
+
+  <section>
+    <h2>Live on Base Sepolia (chainId 84532)</h2>
+    <table class="contracts">
+      <tr><td>Anchor (Merkle-root registry)</td><td><a href="https://sepolia.basescan.org/address/0x290825Ee1124617649c527A2230881e63173519D" target="_blank" rel="noopener"><code>0x290825…519D</code></a></td></tr>
+      <tr><td>IdentityRegistry (ERC-8004-compatible)</td><td><a href="https://sepolia.basescan.org/address/0xc785F1124d7C8e77aFF446B377C013fE4A2857F9" target="_blank" rel="noopener"><code>0xc785…57F9</code></a></td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>Use it</h2>
+    <pre><span class="c"># Reproducible from a clean clone — no API keys, public market data</span>
+git clone https://github.com/LeventLabs/TrackProof trackproof &amp;&amp; cd trackproof
+npm install &amp;&amp; npm test
+
+<span class="c"># Emit a capsule over real history, then verify it (G1 + G3)</span>
+npm run trackproof -- emit   --instrument BTCUSDT --demo
+npm run trackproof -- replay --last
+
+<span class="c"># Or drive it from any MCP client (Claude Code, Cursor, …)</span>
+claude mcp add -s user trackproof -- node packages/mcp-server/dist/index.js</pre>
+  </section>
+</div>
+
+<footer>
+  <p>TrackProof — Bitget AI Base Camp Hackathon S1 · Track 2 (Trading Infra).<br>
+  Simulation / paper trading only — no real capital, no real-account orders. Unaudited. Not investment advice.<br>
+  <a href="https://github.com/LeventLabs/TrackProof" target="_blank" rel="noopener">github.com/LeventLabs/TrackProof</a> · MIT</p>
+</footer>
+</body>
+</html>
