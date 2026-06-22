@@ -5,7 +5,7 @@ import { BitgetMarketData } from "@trackproof/bitget";
 import { anchorCapsules, capsuleLeaf, verifyCapsule, verifyChain, verifyCommitment, type TradeDecisionBody } from "@trackproof/core";
 import { loadAnchor, openStore, readChain, saveAnchor, TrackProof } from "@trackproof/sdk";
 import { INSTALL_TARGETS, installSkill, isInstallTarget, type InstallTarget } from "@trackproof/skill";
-import { anchorRun, formatEvidenceHtml, formatEvidenceReport, gatherEvidence, runAgents } from "@trackproof/demo-agents";
+import { anchorRun, formatEvidenceHtml, formatEvidenceReport, gatherEvidence, runAgents, runHandoffs } from "@trackproof/demo-agents";
 import { parseArgs } from "./args.js";
 
 const HOME = process.env.TRACKPROOF_HOME ?? ".trackproof";
@@ -172,6 +172,9 @@ async function cmdDemo(flags: Record<string, string | boolean>): Promise<void> {
     console.log(`  ${r.name.padEnd(16)} ${String(r.emitted).padStart(5)} capsules  [${r.tier}]`);
   }
   console.log(`Emitted ${total} capsules across ${runs.length} agents into ${DEMO_HOME}/.`);
+
+  const handoffs = await runHandoffs({ baseDir: DEMO_HOME });
+  console.log(`Ran ${handoffs.length} MemorySlice handoffs over the x402 stub — each a verifiable memory_purchase capsule.`);
 
   if (flags["no-anchor"]) {
     console.log("Skipped anchoring (--no-anchor). Omit the flag to anchor each chain on Base.");

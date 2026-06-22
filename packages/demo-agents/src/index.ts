@@ -17,5 +17,6 @@ export * from "./fixtures.js";
 export * from "./runner.js";
 export * from "./fakes.js";
 export * from "./tier2.js";
+export * from "./handoffs.js";
 export * from "./evidence.js";
 export * from "./report-html.js";

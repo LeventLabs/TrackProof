@@ -45,6 +45,8 @@ export interface AgentEvidence {
   tier2Badge: boolean;
   /** Cumulative mark-to-market P&L over the sampled settled trades, in chain order (descriptive). */
   pnlSeries: number[];
+  /** Count of `memory_purchase` capsules on this agent's chain (MemorySlice handoffs bought). */
+  handoffs: number;
 }
 
 export interface FakeEvidence {
@@ -69,12 +71,14 @@ export interface EvidenceReport {
     inclusionAgents: number;
     tier2Agents: number;
     fakeCatches: number;
+    handoffs: number;
   };
   baseline: {
     capsules: boolean;
     verifications: boolean;
     fakeCatches: boolean;
     inclusionPerAgent: boolean;
+    handoffs: boolean;
     allMet: boolean;
   };
 }
@@ -165,6 +169,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
       inclusionVerified,
       tier2Badge: t2.badge,
       pnlSeries,
+      handoffs: chain.filter((c) => c.kind === "memory_purchase").length,
     });
   }
 
@@ -199,11 +204,13 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
   }
 
   const inclusionAgents = agentReports.filter((a) => a.inclusionVerified).length;
+  const totalHandoffs = agentReports.reduce((sum, a) => sum + a.handoffs, 0);
   const baseline = {
     capsules: totalCapsules >= 1000 && agents.length >= 3,
     verifications: verifiedPassed >= 50,
     fakeCatches: fakeCatches >= 3,
     inclusionPerAgent: agentReports.length > 0 && inclusionAgents === agentReports.length,
+    handoffs: totalHandoffs >= 5,
   };
 
   return {
@@ -220,6 +227,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
       inclusionAgents,
       tier2Agents: agentReports.filter((a) => a.tier2Badge).length,
       fakeCatches,
+      handoffs: totalHandoffs,
     },
     baseline: { ...baseline, allMet: Object.values(baseline).every(Boolean) },
   };
@@ -251,6 +259,7 @@ export function formatEvidenceReport(r: EvidenceReport): string {
   );
   L.push(`On-chain anchors: ${r.totals.anchoredAgents}/${r.totals.agents} agents · inclusion verified ${r.totals.inclusionAgents}/${r.totals.agents}`);
   L.push(`Tier-2 reproducible: ${r.totals.tier2Agents} agent(s)`);
+  L.push(`MemorySlice handoffs (x402 stub): ${r.totals.handoffs}`);
   L.push("");
   L.push(`Fake records caught (${r.totals.fakeCatches} total):`);
   for (const f of r.fakes) {
@@ -262,6 +271,7 @@ export function formatEvidenceReport(r: EvidenceReport): string {
   L.push(`  >=50 verifications            : ${yn(r.baseline.verifications)} (${r.totals.verifiedPassed})`);
   L.push(`  >=3 fake catches              : ${yn(r.baseline.fakeCatches)} (${r.totals.fakeCatches})`);
   L.push(`  >=1 inclusion proof / agent   : ${yn(r.baseline.inclusionPerAgent)} (${r.totals.inclusionAgents}/${r.totals.agents})`);
+  L.push(`  >=5 MemorySlice handoffs      : ${yn(r.baseline.handoffs)} (${r.totals.handoffs})`);
   L.push(`  ALL MET                       : ${r.baseline.allMet ? "YES ✓" : "NO"}`);
   L.push("");
   L.push("P&L is descriptive, not execution-realistic. Not investment advice.");

@@ -191,6 +191,7 @@ export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOp
     ${pill(b.verifications, `${t.verifiedPassed} verifications`)}
     ${pill(b.fakeCatches, `${t.fakeCatches} fakes caught`)}
     ${pill(b.inclusionPerAgent, `${t.inclusionAgents}/${t.agents} inclusion proofs`)}
+    ${pill(b.handoffs, `${t.handoffs} memory handoffs`)}
   </div>
 
   <h2>Reputation leaderboard</h2>
@@ -212,6 +213,7 @@ ${cards}
     <div class="stat"><b>${t.settled}</b><span>settled outcomes</span></div>
     <div class="stat"><b>${t.anchoredAgents}/${t.agents}</b><span>anchored on Base</span></div>
     <div class="stat"><b>${t.tier2Agents}</b><span>Tier-2 reproducible</span></div>
+    <div class="stat"><b>${t.handoffs}</b><span>MemorySlice handoffs (x402 stub)</span></div>
   </div>
 
   <h2>Caught fakes (${t.fakeCatches})</h2>

@@ -63,7 +63,7 @@ Capsule {
 // kind = "trade_decision"  → the headline DecisionCapsule
 { market_ref, inputs_digest, action, repro?, attested? }
 
-// kind = "memory_purchase" → provenance receipt for a bought edge (MemorySlice market — roadmap)
+// kind = "memory_purchase" → provenance receipt for a bought edge (MemorySlice market; x402 stub today)
 { slice_id, seller_agent_id, price, payment_ref, body_hash }
 ```
 
@@ -135,7 +135,7 @@ Tools: **`capsule_emit`** (record a paper trade decision over real Bitget histor
 | `Anchor` (Merkle-root registry) | [`0x290825Ee1124617649c527A2230881e63173519D`](https://sepolia.basescan.org/address/0x290825Ee1124617649c527A2230881e63173519D) |
 | `IdentityRegistry` (ERC-8004-compatible) | [`0xc785F1124d7C8e77aFF446B377C013fE4A2857F9`](https://sepolia.basescan.org/address/0xc785F1124d7C8e77aFF446B377C013fE4A2857F9) |
 
-A live evidence run notarized **1,903 capsules across 3 agents** (3 Merkle roots on Base, one inclusion proof per agent), with **60/60 sampled decisions re-verified (G1)** and **5/5 seeded fakes caught** (fabricated prices → G1; a deleted losing trade → G3).
+A live evidence run notarized **1,909 capsules across 3 agents** (3 Merkle roots on Base, one inclusion proof per agent), with **60/60 sampled decisions re-verified (G1)**, **5/5 seeded fakes caught** (fabricated prices → G1; a deleted losing trade → G3), and **6 agent-to-agent MemorySlice handoffs** over the x402 stub — each a verifiable `memory_purchase` capsule.
 
 ## Architecture
 
@@ -149,6 +149,7 @@ A TypeScript monorepo (npm workspaces, native-first — `node:crypto` for signin
 | `sdk` | File-backed agent store + the ~12-line wrapper above |
 | `cli` | `trackproof` — `emit` · `anchor` · `replay` · `verify` · `demo` · `evidence` · `install` |
 | `demo-agents` | 3 seeded-deterministic agents, the evidence pipeline, and the self-contained HTML evidence page |
+| `memory` | MemorySlice market + x402 **stub** — AES-256-GCM-sealed know-how, verifiable `memory_purchase` capsules |
 | `mcp-server` | stdio MCP server (`capsule_emit` / `capsule_verify`) |
 | `skill` | Installable agent skill (`trackproof install`) |
 | `contracts/` | Solidity — `Anchor` + ERC-8004-compatible `IdentityRegistry` (Foundry-tested) |
@@ -163,7 +164,7 @@ The capsule / replay / anchor core is exchange-agnostic; Bitget is a thin read-o
 
 ## Roadmap
 
-- **MemorySlice market** — agents sell a learned edge to other agents over **x402** (Base), with a `memory_purchase` capsule as the provenance receipt.
+- **Live x402 settlement** — the MemorySlice market and `memory_purchase` provenance capsules ship today behind a local x402 **stub**; the roadmap swaps in a live x402 facilitator on Base behind the same `settle` envelope.
 - Funding/fills folded into the proof; memory **royalties** (sellers paid when buyers profit from a cited slice).
 - Full **ERC-8004** — Reputation and Validation registries (the MVP ships an ERC-8004-*compatible* Identity registry).
 - **Challenge bonds** — stake against a claimed record; replay settles the bond. Additional venues and chains.
