@@ -137,6 +137,8 @@ Tools: **`capsule_emit`** (record a paper trade decision over real Bitget histor
 
 A live evidence run notarized **over 1,900 capsules across 3 agents** (3 Merkle roots on Base, one inclusion proof per agent), with **60/60 sampled decisions re-verified (G1)**, **2 seeded fakes caught** across 5 capsule-level checks (fabricated prices → G1 ×4; a deleted losing trade → G3), and **6 agent-to-agent MemorySlice handoffs** over the x402 stub — each a verifiable `memory_purchase` capsule.
 
+Those capsules are **inclusion-proven** (each sits in an on-chain anchored Merkle root) over *backfilled* history — so by the certifiability rule (anchored **before** the outcome, R4.4) they are inclusion-proven, **not** certifiable. Certifiability is enforced by the mechanism + unit tests and **demonstrated live** in [`scripts/certifiable-demo.mjs`](scripts/certifiable-demo.mjs): a fresh decision anchored on Base Sepolia **58 s before** its outcome window opened → `certifiable=true` (block `43190895`). In real-time operation that is the normal path; the bulk run backfills history (whose outcomes already printed) to show G1/G3/inclusion at scale.
+
 ## Architecture
 
 A TypeScript monorepo (npm workspaces, native-first — `node:crypto` for signing, `fetch` for data; the only third-party runtime deps are `viem` (Base) and the MCP SDK + `zod` (the MCP server)):

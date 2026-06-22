@@ -16,6 +16,7 @@
     "clean": "tsc -b --clean",
     "trackproof": "node packages/cli/dist/index.js",
     "evidence:tick": "node scripts/evidence-tick.mjs",
+    "certifiable:demo": "node scripts/certifiable-demo.mjs",
     "test": "npm run build && node --test \"packages/*/dist/**/*.test.js\"",
     "test:contracts": "forge test --root contracts"
   },

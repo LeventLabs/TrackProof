@@ -227,6 +227,7 @@ ${cards}
     <div class="stat"><b>${t.tier2Agents}</b><span>Tier-2 reproducible</span></div>
     <div class="stat"><b>${t.handoffs}</b><span>MemorySlice handoffs (x402 stub)</span></div>
   </div>
+  <p class="muted" style="margin-top:10px;font-size:13px">On-chain status above is <b>inclusion</b> — each capsule is in the anchored Merkle root. <b>Certifiability</b> (anchored <i>before</i> the outcome, R4.4) is the real-time property; this run backfills history (outcomes already printed), so it is inclusion-proven. A genuinely certifiable capsule is demonstrated live in <code>scripts/certifiable-demo.mjs</code>.</p>
 
   <h2>Caught fakes — ${report.fakes.length} seeded, ${t.fakeCatches} capsule-level catches</h2>
 ${fakes}
