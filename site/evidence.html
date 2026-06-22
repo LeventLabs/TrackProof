@@ -45,6 +45,8 @@
   .fake .tag { font-size:11px; padding:2px 7px; border-radius:6px; border:1px solid var(--line); color:var(--muted); }
   .fake .claim { font-weight:600; } .fake .detail { grid-column:2; color:var(--muted); font-size:13px; }
   .fake .verdict { font-size:13px; font-weight:600; }
+  pre.cmds { background:#0f1419; border:1px solid var(--line); border-radius:8px; padding:14px 16px; overflow:auto; font-size:12.5px; line-height:1.75; color:var(--fg); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  pre.cmds .c { color:var(--muted); }
   footer { margin-top:40px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
 </style>
 </head>
@@ -53,7 +55,7 @@
   <header>
     <h1>TrackProof — verifiable track records</h1>
     <p class="sub">Re-fetched market data (G1) · on-chain commitment before outcome (G2) · complete hash-chain (G3). Simulation / paper only.</p>
-    <p class="gen">Generated 2026-06-22T08:03:12.247Z · anchored on <a href="https://sepolia.basescan.org/address/0x290825Ee1124617649c527A2230881e63173519D" target="_blank" rel="noopener">0x290825Ee1124617649c527A2230881e63173519D</a></p>
+    <p class="gen">Generated 2026-06-22T08:27:36.880Z · anchored on <a href="https://sepolia.basescan.org/address/0x290825Ee1124617649c527A2230881e63173519D" target="_blank" rel="noopener">0x290825Ee1124617649c527A2230881e63173519D</a></p>
   </header>
 
   <div class="pills">
@@ -176,6 +178,27 @@
         <span class="detail">chain breaks after the deleted seq 2</span>
         <span class="verdict ok">caught ✓</span>
       </div>
+
+  <h2>MemorySlice handoffs — x402 stub (6)</h2>
+  <table>
+    <thead><tr><th>Buyer</th><th>Seller</th><th class="num">Price</th><th>Payment ref</th></tr></thead>
+    <tbody>
+<tr><td>Momentum Mara</td><td>Reversion Rey</td><td class="num">5</td><td><code>stub:bf9db18cf76afe9e0…</code></td></tr>
+<tr><td>Momentum Mara</td><td>Breakout Bo</td><td class="num">5</td><td><code>stub:8c67d0f7904e3846b…</code></td></tr>
+<tr><td>Reversion Rey</td><td>Momentum Mara</td><td class="num">5</td><td><code>stub:019dff9888281b1ad…</code></td></tr>
+<tr><td>Reversion Rey</td><td>Breakout Bo</td><td class="num">5</td><td><code>stub:d8297938c4da17d63…</code></td></tr>
+<tr><td>Breakout Bo</td><td>Momentum Mara</td><td class="num">5</td><td><code>stub:0ab65942ff16c1b07…</code></td></tr>
+<tr><td>Breakout Bo</td><td>Reversion Rey</td><td class="num">5</td><td><code>stub:aa0cf91d52ee3ad49…</code></td></tr>
+    </tbody>
+  </table>
+  <p class="muted" style="margin-top:10px;font-size:13px">Each handoff is a verifiable <code>memory_purchase</code> capsule on the buyer's chain. Payments settle through a local x402 <b>stub</b> (the <code>stub:</code> prefix is honest); live x402 settlement is on the roadmap.</p>
+
+  <h2>Challenge any record</h2>
+  <p class="muted">You don't have to trust this page. Re-fetch the data, replay it, and check the on-chain commitment yourself — keyless:</p>
+  <pre class="cmds"><span class="c"># git clone https://github.com/LeventLabs/TrackProof &amp;&amp; cd TrackProof</span>
+npm install &amp;&amp; npm run build
+npm run trackproof -- demo                          <span class="c"># reproduce the agents + evidence</span>
+npm run trackproof -- verify --last --with-anchor   <span class="c"># G1 replay + G3 chain + on-chain G2</span></pre>
 
   <footer>
     P&amp;L is descriptive, not execution-realistic. TrackProof proves the integrity of an agent's

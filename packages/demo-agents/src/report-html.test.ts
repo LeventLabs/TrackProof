@@ -14,6 +14,10 @@ function fakeReport(): EvidenceReport {
       { key: "fab", claim: "+412% ROI (fabricated prices)", failureClass: "G1", caught: 4, detail: "4/4 capsules failed G1" },
       { key: "del", claim: "100% win rate <deleted loser>", failureClass: "G3", caught: 1, detail: "chain breaks after seq 2" },
     ],
+    handoffs: [
+      { buyer: "Breakout Bo", seller: "Momentum Mara", price: "5", payment_ref: "stub:abc123def456abc123def456" },
+      { buyer: "Momentum Mara", seller: "Reversion Rey", price: "5", payment_ref: "stub:7890abcdef7890abcdef00" },
+    ],
     totals: { agents: 2, capsules: 1077, sampled: 40, verifiedPassed: 40, settled: 40, anchoredAgents: 2, inclusionAgents: 2, tier2Agents: 1, fakeCatches: 5, handoffs: 6 },
     baseline: { capsules: true, verifications: false, fakeCatches: true, inclusionPerAgent: true, handoffs: true, allMet: false },
   };
@@ -45,5 +49,14 @@ test("formatEvidenceHtml draws P&L sparklines (green up / red down), still no sc
   assert.match(html, /<polyline points=/);
   assert.match(html, /<svg class="spark ok"/); // Breakout ends positive
   assert.match(html, /<svg class="spark bad"/); // Momentum ends negative
+  assert.equal(/<script\b/i.test(html), false);
+});
+
+test("formatEvidenceHtml renders the MemorySlice handoffs panel + a challenge section", () => {
+  const html = formatEvidenceHtml(fakeReport());
+  assert.match(html, /MemorySlice handoffs/);
+  assert.match(html, /stub:abc123def456/); // a handoff payment_ref
+  assert.match(html, /Challenge any record/);
+  assert.match(html, /verify --last --with-anchor/);
   assert.equal(/<script\b/i.test(html), false);
 });

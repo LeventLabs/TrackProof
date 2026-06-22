@@ -6,6 +6,7 @@ import {
   verifyInclusion,
   type AnchorStore,
   type MarketDataSource,
+  type MemoryPurchaseBody,
   type SignedCapsule,
 } from "@trackproof/core";
 import { loadAnchor, openStore, readChain } from "@trackproof/sdk";
@@ -57,10 +58,19 @@ export interface FakeEvidence {
   detail: string;
 }
 
+/** One MemorySlice handoff, resolved to agent display names. */
+export interface HandoffDetail {
+  buyer: string;
+  seller: string;
+  price: string;
+  payment_ref: string;
+}
+
 export interface EvidenceReport {
   generatedAt: number;
   agents: AgentEvidence[];
   fakes: FakeEvidence[];
+  handoffs: HandoffDetail[];
   totals: {
     agents: number;
     capsules: number;
@@ -106,6 +116,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
   const perAgentVerify = Math.ceil(verifySample / Math.max(1, agents.length));
 
   const agentReports: AgentEvidence[] = [];
+  const rawHandoffs: { buyerName: string; sellerId: string; price: string; payment_ref: string }[] = [];
   let totalCapsules = 0;
   let sampled = 0;
   let verifiedPassed = 0;
@@ -116,6 +127,12 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
     const chain = readChain(store);
     totalCapsules += chain.length;
     const chk = verifyChain(chain);
+    for (const c of chain) {
+      if (c.kind === "memory_purchase") {
+        const b = c.body as MemoryPurchaseBody;
+        rawHandoffs.push({ buyerName: agent.name, sellerId: b.seller_agent_id, price: b.price, payment_ref: b.payment_ref });
+      }
+    }
 
     const pnlSeries: number[] = [];
     let cumulativePnl = 0;
@@ -205,6 +222,13 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
 
   const inclusionAgents = agentReports.filter((a) => a.inclusionVerified).length;
   const totalHandoffs = agentReports.reduce((sum, a) => sum + a.handoffs, 0);
+  const nameById = new Map(agentReports.map((a) => [a.agentId, a.name]));
+  const handoffDetails: HandoffDetail[] = rawHandoffs.map((h) => ({
+    buyer: h.buyerName,
+    seller: nameById.get(h.sellerId) ?? `${h.sellerId.slice(0, 10)}…`,
+    price: h.price,
+    payment_ref: h.payment_ref,
+  }));
   const baseline = {
     capsules: totalCapsules >= 1000 && agents.length >= 3,
     verifications: verifiedPassed >= 50,
@@ -217,6 +241,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
     generatedAt: Date.now(),
     agents: agentReports,
     fakes: fakeReports,
+    handoffs: handoffDetails,
     totals: {
       agents: agents.length,
       capsules: totalCapsules,

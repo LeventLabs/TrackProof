@@ -124,6 +124,14 @@ export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOp
     })
     .join("\n");
 
+  const handoffRows = report.handoffs
+    .slice(0, 24)
+    .map(
+      (h) =>
+        `<tr><td>${esc(h.buyer)}</td><td>${esc(h.seller)}</td><td class="num">${esc(h.price)}</td><td><code>${esc(h.payment_ref.slice(0, 22))}…</code></td></tr>`,
+    )
+    .join("\n");
+
   const t = report.totals;
   const b = report.baseline;
 
@@ -174,6 +182,8 @@ export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOp
   .fake .tag { font-size:11px; padding:2px 7px; border-radius:6px; border:1px solid var(--line); color:var(--muted); }
   .fake .claim { font-weight:600; } .fake .detail { grid-column:2; color:var(--muted); font-size:13px; }
   .fake .verdict { font-size:13px; font-weight:600; }
+  pre.cmds { background:#0f1419; border:1px solid var(--line); border-radius:8px; padding:14px 16px; overflow:auto; font-size:12.5px; line-height:1.75; color:var(--fg); font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  pre.cmds .c { color:var(--muted); }
   footer { margin-top:40px; padding-top:16px; border-top:1px solid var(--line); color:var(--muted); font-size:13px; }
 </style>
 </head>
@@ -218,6 +228,22 @@ ${cards}
 
   <h2>Caught fakes (${t.fakeCatches})</h2>
 ${fakes}
+
+  <h2>MemorySlice handoffs — x402 stub (${report.handoffs.length})</h2>
+  <table>
+    <thead><tr><th>Buyer</th><th>Seller</th><th class="num">Price</th><th>Payment ref</th></tr></thead>
+    <tbody>
+${handoffRows}
+    </tbody>
+  </table>
+  <p class="muted" style="margin-top:10px;font-size:13px">Each handoff is a verifiable <code>memory_purchase</code> capsule on the buyer's chain. Payments settle through a local x402 <b>stub</b> (the <code>stub:</code> prefix is honest); live x402 settlement is on the roadmap.</p>
+
+  <h2>Challenge any record</h2>
+  <p class="muted">You don't have to trust this page. Re-fetch the data, replay it, and check the on-chain commitment yourself — keyless:</p>
+  <pre class="cmds"><span class="c"># git clone https://github.com/LeventLabs/TrackProof &amp;&amp; cd TrackProof</span>
+npm install &amp;&amp; npm run build
+npm run trackproof -- demo                          <span class="c"># reproduce the agents + evidence</span>
+npm run trackproof -- verify --last --with-anchor   <span class="c"># G1 replay + G3 chain + on-chain G2</span></pre>
 
   <footer>
     P&amp;L is descriptive, not execution-realistic. TrackProof proves the integrity of an agent's
