@@ -31,5 +31,13 @@ Expected: the buyer's request gets a 402, x402 pays $0.01 USDC to the seller on 
 facilitator settles on-chain, the buyer receives the slice, and a `memory_purchase` capsule verifies
 `PASSED` with the live settlement as its `payment_ref`.
 
+## Verified live
+
+A real run on Base Sepolia: the buyer paid **$0.01 test USDC** to the seller, settled through the
+x402.org facilitator — settlement tx
+[`0x5c012d…719f`](https://sepolia.basescan.org/tx/0x5c012d242807fc7247aa02abf20ac4bc374c22fb6c544f9a8ae16346f8f7719f)
+(buyer −0.01, seller +0.01) — and the purchase verified as a `memory_purchase` capsule (`PASSED`)
+with that tx as its `payment_ref`.
+
 [x402.org testnet facilitator]: https://x402.org/facilitator
 [faucet.circle.com]: https://faucet.circle.com

@@ -164,7 +164,7 @@ The capsule / replay / anchor core is exchange-agnostic; Bitget is a thin read-o
 
 ## Roadmap
 
-- **Live x402 settlement** — the MemorySlice market and `memory_purchase` provenance capsules ship today behind a local x402 **stub**; the roadmap swaps in a live x402 facilitator on Base behind the same `settle` envelope.
+- **Live x402 settlement** — the MemorySlice market ships a local x402 **stub** for the reproducible demo; a faithful **live** x402 settlement (real test USDC on Base Sepolia) is demonstrated in [`examples/x402-live`](examples/x402-live) behind the same `settle` envelope.
 - Public **fills** folded into the proof (funding-rate history already is); memory **royalties** (sellers paid when buyers profit from a cited slice).
 - Full **ERC-8004** — Reputation and Validation registries (the MVP ships an ERC-8004-*compatible* Identity registry).
 - **Challenge bonds** — stake against a claimed record; replay settles the bond. Additional venues and chains.
