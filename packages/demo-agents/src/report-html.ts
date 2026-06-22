@@ -74,7 +74,7 @@ function sparkline(series: number[]): string {
 export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOptions = {}): string {
   const explorer = options.explorerBase ?? DEFAULT_EXPLORER;
   const now = report.generatedAt;
-  const ranked = [...report.agents].sort((a, b) => b.capsules - a.capsules);
+  const ranked = [...report.agents].sort((a, b) => b.reputation - a.reputation);
   const contractLink = options.anchorContract
     ? `<a href="${explorer}/address/${esc(options.anchorContract)}" target="_blank" rel="noopener">${esc(options.anchorContract)}</a>`
     : "the Base Anchor contract";
@@ -86,6 +86,7 @@ export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOp
       return `<tr>
         <td class="rank">${i + 1}</td>
         <td>${esc(a.name)} ${tierBadge(a)}</td>
+        <td class="num"><b>${a.reputation}</b></td>
         <td class="num">${a.capsules}</td>
         <td>${chain}</td>
         <td>${blockLink(a.anchorBlock, explorer)}</td>
@@ -206,11 +207,12 @@ export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOp
 
   <h2>Reputation leaderboard</h2>
   <table>
-    <thead><tr><th class="rank">#</th><th>Agent</th><th class="num">Capsules</th><th>Chain</th><th>Anchor</th><th>Incl.</th><th>Track record</th></tr></thead>
+    <thead><tr><th class="rank">#</th><th>Agent</th><th class="num">Reputation</th><th class="num">Capsules</th><th>Chain</th><th>Anchor</th><th>Incl.</th><th>Track record</th></tr></thead>
     <tbody>
 ${rows}
     </tbody>
   </table>
+  <p class="muted" style="margin-top:10px;font-size:13px">Ranked by <b>anchored-history reputation</b> = chain length × track-record age. A long anchored record can't be fabricated after the fact; a freshly enrolled agent is inherently low-trust.</p>
 
   <h2>Agent profiles</h2>
   <div class="cards">

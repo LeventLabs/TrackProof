@@ -48,6 +48,12 @@ export interface AgentEvidence {
   pnlSeries: number[];
   /** Count of `memory_purchase` capsules on this agent's chain (MemorySlice handoffs bought). */
   handoffs: number;
+  /**
+   * Anchored-history reputation = chain length × (1 + track-record age in days), or 0 if the chain
+   * isn't anchored on-chain. Weights both the **length** and the **age** of the anchored record (a
+   * long anchored history can't be fabricated after the fact) — the leaderboard ranks by this.
+   */
+  reputation: number;
 }
 
 export interface FakeEvidence {
@@ -171,6 +177,10 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
 
     const t2 = await rederiveChain(sample(chain, tier2Sample), config.source);
 
+    const enrolledAt = chain[0]?.committed_at;
+    const ageDays = enrolledAt !== undefined ? Math.max(0, (Date.now() - enrolledAt) / 86_400_000) : 0;
+    const reputation = anchored ? Math.round(chain.length * (1 + ageDays)) : 0;
+
     agentReports.push({
       key: agent.key,
       name: agent.name,
@@ -179,7 +189,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
       capsules: chain.length,
       chainOk: chk.ok,
       firstBadSeq: chk.firstBadSeq,
-      enrolledAt: chain[0]?.committed_at,
+      enrolledAt,
       anchored,
       anchorRoot,
       anchorBlock,
@@ -187,6 +197,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
       tier2Badge: t2.badge,
       pnlSeries,
       handoffs: chain.filter((c) => c.kind === "memory_purchase").length,
+      reputation,
     });
   }
 

@@ -7,8 +7,8 @@ function fakeReport(): EvidenceReport {
   return {
     generatedAt: Date.UTC(2026, 5, 21),
     agents: [
-      { key: "breakout", name: "Breakout Bo", tier: "reproducible", agentId: "ab".repeat(32), capsules: 327, chainOk: true, enrolledAt: Date.UTC(2026, 5, 1), anchored: true, anchorRoot: "cd".repeat(32), anchorBlock: 43063818, inclusionVerified: true, tier2Badge: true, pnlSeries: [1, 2, 1.5, 3, 4], handoffs: 3 },
-      { key: "momentum", name: "Momentum Mara", tier: "notarized", agentId: "ef".repeat(32), capsules: 750, chainOk: true, enrolledAt: Date.UTC(2026, 5, 2), anchored: true, anchorRoot: "12".repeat(32), anchorBlock: 43063816, inclusionVerified: true, tier2Badge: false, pnlSeries: [-1, -2, -1, -3], handoffs: 3 },
+      { key: "breakout", name: "Breakout Bo", tier: "reproducible", agentId: "ab".repeat(32), capsules: 327, chainOk: true, enrolledAt: Date.UTC(2026, 5, 1), anchored: true, anchorRoot: "cd".repeat(32), anchorBlock: 43063818, inclusionVerified: true, tier2Badge: true, pnlSeries: [1, 2, 1.5, 3, 4], handoffs: 3, reputation: 5000 },
+      { key: "momentum", name: "Momentum Mara", tier: "notarized", agentId: "ef".repeat(32), capsules: 750, chainOk: true, enrolledAt: Date.UTC(2026, 5, 2), anchored: true, anchorRoot: "12".repeat(32), anchorBlock: 43063816, inclusionVerified: true, tier2Badge: false, pnlSeries: [-1, -2, -1, -3], handoffs: 3, reputation: 1000 },
     ],
     fakes: [
       { key: "fab", claim: "+412% ROI (fabricated prices)", failureClass: "G1", caught: 4, detail: "4/4 capsules failed G1" },
@@ -33,8 +33,8 @@ test("formatEvidenceHtml renders a self-contained page", () => {
 
 test("formatEvidenceHtml ranks by capsules, escapes data, and links on-chain", () => {
   const html = formatEvidenceHtml(fakeReport(), { anchorContract: "0xAnChOr" });
-  // ranked desc → Momentum (750) appears before Breakout (327)
-  assert.ok(html.indexOf("Momentum Mara") < html.indexOf("Breakout Bo"));
+  // ranked by reputation (Breakout 5000 > Momentum 1000), NOT by capsule count (Momentum 750 > Breakout 327)
+  assert.ok(html.indexOf("Breakout Bo") < html.indexOf("Momentum Mara"));
   // HTML-escapes a hostile claim
   assert.match(html, /100% win rate &lt;deleted loser&gt;/);
   // on-chain links + disclaimers + badges
