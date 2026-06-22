@@ -166,6 +166,20 @@ The capsule / replay / anchor core is exchange-agnostic; Bitget is a thin read-o
 - On-chain components run on **Base Sepolia** (testnet) and hold no funds.
 - **Unaudited.** Not custody, trading, or investment advice. ERC-8004-*compatible* (not yet conformant).
 
+## Trust model & limitations
+
+What the on-chain layer does and doesn't bind, for a sharp reviewer:
+
+- **The contract is a timestamped Merkle-root store, not an "on-chain verifier."** Inclusion is recomputed *off-chain* against a root the client reads from the chain; `Anchor` only records `root → (block, timestamp)`. `submitRoot` is permissionless (correct for a public notary), and G2's "before the outcome" rests on `block.timestamp`, which on an L2 is sequencer-set.
+- **Bulk evidence is inclusion-proven backfill, not certifiable.** The showcased run anchors historical decisions whose outcomes already printed; certifiability (anchored *before* the outcome, R4.4) is the real-time path, demonstrated live in `scripts/certifiable-demo.mjs`. Reputation age uses the **on-chain anchor time** (unfakeable), not the agent's local `committed_at`.
+- **On-chain identity is deployed but not yet wired.** `IdentityRegistry` is live + tested but not called in the agent lifecycle, and `enroll` is currently unauthenticated (anyone could enroll any agent id). The "enrollment genesis" is a local chain seq 0. *Roadmap:* authenticate `enroll` (bind to `msg.sender` / a signature) and wire it so age is genuinely on-chain.
+- **Tail-truncation is not yet prevented.** The anchor stores roots, not a per-agent *head*, so an operator could withhold recent (losing) capsules and present an older anchored prefix. G3 detects deletions *within* a presented chain, not withheld tails. *Roadmap:* commit a per-agent monotonic head on-chain.
+- **The MemorySlice market is a key-release gate, not an on-chain escrow.** It trusts the facilitator receipt and the in-repo flow uses an x402 **stub**; a real on-chain USDC settlement is demonstrated in `examples/x402-live`.
+- **Cross-language canonical JSON is constrained.** Keys sort by JS UTF-16 code units and numbers format per ECMAScript; a reimplementation must match these (mitigated because market values are string-encoded, with a golden-vector test).
+- **Keys + persistence are demo-grade.** Agent signing keys are plaintext PEM (`0600`, no passphrase/rotation/KMS); state is append-only JSONL with no locking. Fine for a Base Sepolia testnet demo, not production.
+
+The fixture G1 unit tests prove internal *consistency*; **authenticity** is proven by the live Bitget run.
+
 ## Roadmap
 
 - **Live x402 settlement** — the MemorySlice market ships a local x402 **stub** for the reproducible demo; a faithful **live** x402 settlement (real test USDC on Base Sepolia) is demonstrated in [`examples/x402-live`](examples/x402-live) behind the same `settle` envelope.
