@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 import { writeFileSync } from "node:fs";
-import { BaseAnchorStore } from "@trackproof/base";
+import { BaseAnchorStore, BaseHeadRegistry } from "@trackproof/base";
 import { BitgetMarketData } from "@trackproof/bitget";
 import { anchorCapsules, capsuleLeaf, verifyCapsule, verifyChain, verifyCommitment, type TradeDecisionBody } from "@trackproof/core";
 import { loadAnchor, openStore, readChain, saveAnchor, TrackProof } from "@trackproof/sdk";
 import { INSTALL_TARGETS, installSkill, isInstallTarget, type InstallTarget } from "@trackproof/skill";
-import { anchorRun, formatEvidenceHtml, formatEvidenceReport, gatherEvidence, runAgents, runHandoffs } from "@trackproof/demo-agents";
+import { anchorRun, commitHeads, formatEvidenceHtml, formatEvidenceReport, gatherEvidence, runAgents, runHandoffs } from "@trackproof/demo-agents";
 import { parseArgs } from "./args.js";
 
 const HOME = process.env.TRACKPROOF_HOME ?? ".trackproof";
 const ANCHOR_ADDRESS = (process.env.TRACKPROOF_ANCHOR_ADDRESS ??
   "0x290825Ee1124617649c527A2230881e63173519D") as `0x${string}`;
+const HEAD_REGISTRY_ADDRESS = (process.env.TRACKPROOF_HEAD_REGISTRY_ADDRESS ??
+  "0xf62aF702b7Ad52bD99de336f129736dEFa7b776e") as `0x${string}`;
 const DEMO_HOME = process.env.TRACKPROOF_DEMO_HOME ?? ".trackproof-demo";
 
 const HELP = `trackproof — verifiable track records for AI trading agents
@@ -191,13 +193,19 @@ async function cmdDemo(flags: Record<string, string | boolean>): Promise<void> {
   for (const a of await anchorRun(anchorStore, { baseDir: DEMO_HOME })) {
     console.log(`  ${a.key.padEnd(12)} root ${a.root.slice(0, 16)}… block ${a.block} (${a.capsules} capsules, ${a.proofs} proofs)`);
   }
+  console.log("Committing each agent's chain head on Base (HeadRegistry — defeats tail-truncation)…");
+  const headRegistry = new BaseHeadRegistry({ registryAddress: HEAD_REGISTRY_ADDRESS, privateKey });
+  for (const h of await commitHeads(headRegistry, { baseDir: DEMO_HOME })) {
+    console.log(`  ${h.key.padEnd(12)} head seq ${h.seq} ${h.committed ? "committed on-chain" : "(already current)"}`);
+  }
   console.log("Done. Run `trackproof evidence` to print the verifiable usage evidence.");
 }
 
 async function cmdEvidence(flags: Record<string, string | boolean>): Promise<void> {
   const source = new BitgetMarketData();
   const anchorStore = new BaseAnchorStore({ anchorAddress: ANCHOR_ADDRESS });
-  const report = await gatherEvidence({ baseDir: DEMO_HOME, source, anchorStore });
+  const headRegistry = new BaseHeadRegistry({ registryAddress: HEAD_REGISTRY_ADDRESS });
+  const report = await gatherEvidence({ baseDir: DEMO_HOME, source, anchorStore, headRegistry });
   if (typeof flags.html === "string") {
     writeFileSync(flags.html, formatEvidenceHtml(report, { anchorContract: ANCHOR_ADDRESS }));
     console.log(`Wrote the evidence page to ${flags.html} — open it in a browser.`);

@@ -4,7 +4,7 @@
 
 TrackProof is a **track-record notary** for AI trading agents. Every simulated decision an agent makes becomes a signed, hash-chained **Capsule** that can be independently replayed against real market data, committed on-chain *before* its outcome is known, and proven to belong to a complete, gap-free history. Honest agents can prove their performance; a fabricated "+412%" record fails verification and is caught.
 
-> **Status:** runnable from a clean clone — `npm install && npm test` (89 tests; +7 Solidity via `npm run test:contracts`). The on-chain layer is **live on Base Sepolia** (addresses below). **Simulation / paper trading only — no real capital, no real-account orders.** Built for the Bitget AI Base Camp Hackathon S1 (Track 2 · Trading Infra).
+> **Status:** runnable from a clean clone — `npm install && npm test` (94 tests; +11 Solidity via `npm run test:contracts`). The on-chain layer is **live on Base Sepolia** (addresses below). **Simulation / paper trading only — no real capital, no real-account orders.** Built for the Bitget AI Base Camp Hackathon S1 (Track 2 · Trading Infra).
 
 ---
 
@@ -77,7 +77,7 @@ No API keys: market history comes from Bitget's **public** endpoints, and on-cha
 
 ```bash
 git clone <repo-url> trackproof && cd trackproof
-npm install && npm test          # builds + runs the suite (89 tests; +7 Solidity via npm run test:contracts)
+npm install && npm test          # builds + runs the suite (94 tests; +11 Solidity via npm run test:contracts)
 
 # 1. Emit a capsule over real BTCUSDT history, then verify it locally (G1 + G3)
 npm run trackproof -- emit   --instrument BTCUSDT --demo
@@ -136,8 +136,9 @@ Tools: **`capsule_emit`** (record a paper trade decision over real Bitget histor
 |---|---|
 | `Anchor` (Merkle-root registry) | [`0x290825Ee1124617649c527A2230881e63173519D`](https://sepolia.basescan.org/address/0x290825Ee1124617649c527A2230881e63173519D) |
 | `IdentityRegistry` (ERC-8004-compatible) | [`0xc785F1124d7C8e77aFF446B377C013fE4A2857F9`](https://sepolia.basescan.org/address/0xc785F1124d7C8e77aFF446B377C013fE4A2857F9) |
+| `HeadRegistry` (per-agent chain head — anti-truncation) | [`0xf62aF702b7Ad52bD99de336f129736dEFa7b776e`](https://sepolia.basescan.org/address/0xf62aF702b7Ad52bD99de336f129736dEFa7b776e) |
 
-A live evidence run notarized **over 1,900 capsules across 3 agents** (3 Merkle roots on Base, one inclusion proof per agent), with **60/60 sampled decisions re-verified (G1)**, **2 seeded fakes caught** across 5 capsule-level checks (fabricated prices → G1 ×4; a deleted losing trade → G3), and **6 agent-to-agent MemorySlice handoffs** over the x402 stub — each a verifiable `memory_purchase` capsule.
+A live evidence run notarized **over 1,900 capsules across 3 agents** (3 Merkle roots on Base, one inclusion proof + an **on-chain head** per agent), with **60/60 sampled decisions re-verified (G1)**, **2 seeded fakes caught** across 5 capsule-level checks (fabricated prices → G1 ×4; a deleted losing trade → G3), and **6 agent-to-agent MemorySlice handoffs** over the x402 stub — each a verifiable `memory_purchase` capsule.
 
 Those capsules are **inclusion-proven** (each sits in an on-chain anchored Merkle root) over *backfilled* history — so by the certifiability rule (anchored **before** the outcome, R4.4) they are inclusion-proven, **not** certifiable. Certifiability is enforced by the mechanism + unit tests and **demonstrated live** in [`scripts/certifiable-demo.mjs`](scripts/certifiable-demo.mjs): a fresh decision anchored on Base Sepolia **58 s before** its outcome window opened → `certifiable=true` (block `43190895`). In real-time operation that is the normal path; the bulk run backfills history (whose outcomes already printed) to show G1/G3/inclusion at scale.
 
@@ -156,7 +157,7 @@ A TypeScript monorepo (npm workspaces, native-first — `node:crypto` for signin
 | `memory` | MemorySlice market + x402 **stub** — AES-256-GCM-sealed know-how, verifiable `memory_purchase` capsules |
 | `mcp-server` | stdio MCP server (`capsule_emit` / `capsule_verify`) |
 | `skill` | Installable agent skill (`trackproof install`) |
-| `contracts/` | Solidity — `Anchor` + ERC-8004-compatible `IdentityRegistry` (Foundry-tested) |
+| `contracts/` | Solidity — `Anchor` (Merkle roots) + `HeadRegistry` (per-agent chain head) + ERC-8004-compatible `IdentityRegistry` (Foundry-tested) |
 
 The capsule / replay / anchor core is exchange-agnostic; Bitget is a thin read-only adapter, Base carries the identity registry and Merkle anchor.
 
@@ -172,8 +173,8 @@ What the on-chain layer does and doesn't bind, for a sharp reviewer:
 
 - **The contract is a timestamped Merkle-root store, not an "on-chain verifier."** Inclusion is recomputed *off-chain* against a root the client reads from the chain; `Anchor` only records `root → (block, timestamp)`. `submitRoot` is permissionless (correct for a public notary), and G2's "before the outcome" rests on `block.timestamp`, which on an L2 is sequencer-set.
 - **Bulk evidence is inclusion-proven backfill, not certifiable.** The showcased run anchors historical decisions whose outcomes already printed; certifiability (anchored *before* the outcome, R4.4) is the real-time path, demonstrated live in `scripts/certifiable-demo.mjs`. Reputation age uses the **on-chain anchor time** (unfakeable), not the agent's local `committed_at`.
-- **On-chain identity is deployed but not yet wired.** `IdentityRegistry` is live + tested but not called in the agent lifecycle, and `enroll` is currently unauthenticated (anyone could enroll any agent id). The "enrollment genesis" is a local chain seq 0. *Roadmap:* authenticate `enroll` (bind to `msg.sender` / a signature) and wire it so age is genuinely on-chain.
-- **Tail-truncation is not yet prevented.** The anchor stores roots, not a per-agent *head*, so an operator could withhold recent (losing) capsules and present an older anchored prefix. G3 detects deletions *within* a presented chain, not withheld tails. *Roadmap:* commit a per-agent monotonic head on-chain.
+- **Tail-truncation is closed on-chain.** `HeadRegistry` commits each agent's latest `(seq, headLeaf)`; a verifier rejects a presented chain whose head seq is *behind* the committed seq (a withheld tail), so an operator can't silently drop recent losing capsules. Ownership is bound to the first committer (`msg.sender`); a first-commit front-run squat is the residual caveat (full agent auth needs on-chain Ed25519 — a roadmap item).
+- **On-chain identity is partly wired.** The per-agent *head* is committed + verified on-chain (`HeadRegistry`, above). The `IdentityRegistry` (identity URI + enrollment genesis) is deployed + tested but not yet called, and `enroll` is unauthenticated. *Roadmap:* authenticate + wire enrollment so the identity URI and on-chain genesis are bound too.
 - **The MemorySlice market is a key-release gate, not an on-chain escrow.** It trusts the facilitator receipt and the in-repo flow uses an x402 **stub**; a real on-chain USDC settlement is demonstrated in `examples/x402-live`.
 - **Cross-language canonical JSON is constrained.** Keys sort by JS UTF-16 code units and numbers format per ECMAScript; a reimplementation must match these (mitigated because market values are string-encoded, with a golden-vector test).
 - **Keys + persistence are demo-grade.** Agent signing keys are plaintext PEM (`0600`, no passphrase/rotation/KMS); state is append-only JSONL with no locking. Fine for a Base Sepolia testnet demo, not production.

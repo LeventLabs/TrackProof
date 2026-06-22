@@ -3,6 +3,7 @@ import { join } from "node:path";
 import {
   anchorCapsules,
   appendCapsule,
+  capsuleLeaf,
   computeInputsDigest,
   type AnchorStore,
   type Candle,
@@ -223,6 +224,45 @@ export async function anchorRun(
       capsules: chain.length,
       proofs: proofs.size,
     });
+  }
+  return results;
+}
+
+export interface HeadRegistryLike {
+  getHead(agentId: string): Promise<{ seq: number; headLeaf: string } | null>;
+  commitHead(agentId: string, seq: number, headLeaf: string): Promise<void>;
+}
+
+export interface HeadCommitResult {
+  key: string;
+  agentId: string;
+  seq: number;
+  committed: boolean;
+}
+
+/**
+ * Commit each agent's latest chain head (seq + leaf) to the on-chain `HeadRegistry`, so a verifier can
+ * reject a withheld tail (tail-truncation). Skips an agent whose on-chain head is already current.
+ */
+export async function commitHeads(registry: HeadRegistryLike, config: AnchorRunConfig): Promise<HeadCommitResult[]> {
+  const agents = config.agents ?? DEMO_AGENTS;
+  const results: HeadCommitResult[] = [];
+  for (const agent of agents) {
+    const store = openStore(join(config.baseDir, agent.key));
+    const chain = readChain(store);
+    const last = chain[chain.length - 1];
+    const agentId = store.keyPair.publicKeyHex;
+    if (!last) {
+      results.push({ key: agent.key, agentId, seq: 0, committed: false });
+      continue;
+    }
+    const current = await registry.getHead(agentId);
+    if (current && current.seq >= last.seq) {
+      results.push({ key: agent.key, agentId, seq: last.seq, committed: false }); // already current
+      continue;
+    }
+    await registry.commitHead(agentId, last.seq, capsuleLeaf(last));
+    results.push({ key: agent.key, agentId, seq: last.seq, committed: true });
   }
   return results;
 }

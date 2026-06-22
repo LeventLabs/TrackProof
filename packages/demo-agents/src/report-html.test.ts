@@ -7,8 +7,8 @@ function fakeReport(): EvidenceReport {
   return {
     generatedAt: Date.UTC(2026, 5, 21),
     agents: [
-      { key: "breakout", name: "Breakout Bo", tier: "reproducible", agentId: "ab".repeat(32), capsules: 327, chainOk: true, enrolledAt: Date.UTC(2026, 5, 1), anchored: true, anchorRoot: "cd".repeat(32), anchorBlock: 43063818, inclusionVerified: true, tier2Badge: true, pnlSeries: [1, 2, 1.5, 3, 4], handoffs: 3, reputation: 5000, anchoredAt: Date.UTC(2026, 5, 22) },
-      { key: "momentum", name: "Momentum Mara", tier: "notarized", agentId: "ef".repeat(32), capsules: 750, chainOk: true, enrolledAt: Date.UTC(2026, 5, 2), anchored: true, anchorRoot: "12".repeat(32), anchorBlock: 43063816, inclusionVerified: true, tier2Badge: false, pnlSeries: [-1, -2, -1, -3], handoffs: 3, reputation: 1000, anchoredAt: Date.UTC(2026, 5, 22) },
+      { key: "breakout", name: "Breakout Bo", tier: "reproducible", agentId: "ab".repeat(32), capsules: 327, chainOk: true, enrolledAt: Date.UTC(2026, 5, 1), anchored: true, anchorRoot: "cd".repeat(32), anchorBlock: 43063818, inclusionVerified: true, headVerified: true, tier2Badge: true, pnlSeries: [1, 2, 1.5, 3, 4], handoffs: 3, reputation: 5000, anchoredAt: Date.UTC(2026, 5, 22) },
+      { key: "momentum", name: "Momentum Mara", tier: "notarized", agentId: "ef".repeat(32), capsules: 750, chainOk: true, enrolledAt: Date.UTC(2026, 5, 2), anchored: true, anchorRoot: "12".repeat(32), anchorBlock: 43063816, inclusionVerified: true, headVerified: true, tier2Badge: false, pnlSeries: [-1, -2, -1, -3], handoffs: 3, reputation: 1000, anchoredAt: Date.UTC(2026, 5, 22) },
     ],
     fakes: [
       { key: "fab", claim: "+412% ROI (fabricated prices)", failureClass: "G1", caught: 4, detail: "4/4 capsules failed G1" },
@@ -18,8 +18,8 @@ function fakeReport(): EvidenceReport {
       { buyer: "Breakout Bo", seller: "Momentum Mara", price: "5", payment_ref: "stub:abc123def456abc123def456" },
       { buyer: "Momentum Mara", seller: "Reversion Rey", price: "5", payment_ref: "stub:7890abcdef7890abcdef00" },
     ],
-    totals: { agents: 2, capsules: 1077, sampled: 40, verifiedPassed: 40, settled: 40, anchoredAgents: 2, inclusionAgents: 2, tier2Agents: 1, fakeCatches: 5, handoffs: 6 },
-    baseline: { capsules: true, verifications: false, fakeCatches: true, inclusionPerAgent: true, handoffs: true, allMet: false },
+    totals: { agents: 2, capsules: 1077, sampled: 40, verifiedPassed: 40, settled: 40, anchoredAgents: 2, inclusionAgents: 2, headsVerified: 2, tier2Agents: 1, fakeCatches: 5, handoffs: 6 },
+    baseline: { capsules: true, verifications: false, fakeCatches: true, inclusionPerAgent: true, heads: true, handoffs: true, allMet: false },
   };
 }
 

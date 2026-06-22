@@ -5,6 +5,7 @@
   "deployedAt": "2026-06-11",
   "contracts": {
     "Anchor": "0x290825Ee1124617649c527A2230881e63173519D",
-    "IdentityRegistry": "0xc785F1124d7C8e77aFF446B377C013fE4A2857F9"
+    "IdentityRegistry": "0xc785F1124d7C8e77aFF446B377C013fE4A2857F9",
+    "HeadRegistry": "0xf62aF702b7Ad52bD99de336f129736dEFa7b776e"
   }
 }

@@ -3,6 +3,7 @@ import {
   capsuleLeaf,
   verifyCapsule,
   verifyChain,
+  verifyHead,
   verifyInclusion,
   type AnchorStore,
   type MarketDataSource,
@@ -12,6 +13,7 @@ import {
 import { loadAnchor, openStore, readChain } from "@trackproof/sdk";
 import { DEMO_AGENTS, type DemoAgent, type Tier } from "./agents.js";
 import { seededFakes, type FailureClass, type FakeRecord } from "./fakes.js";
+import type { HeadRegistryLike } from "./runner.js";
 import { rederiveChain } from "./tier2.js";
 
 export interface EvidenceConfig {
@@ -22,6 +24,8 @@ export interface EvidenceConfig {
   agents?: DemoAgent[];
   /** If given, on-chain inclusion is checked against it (live BaseAnchorStore). */
   anchorStore?: AnchorStore;
+  /** If given, each agent's chain head is checked against the on-chain HeadRegistry (tail-truncation). */
+  headRegistry?: HeadRegistryLike;
   /** Total G1 re-verification sample across agents (default 60 — keeps live API calls bounded). */
   verifySample?: number;
   /** Per-agent Tier-2 re-derivation sample (default 20). */
@@ -45,6 +49,8 @@ export interface AgentEvidence {
   /** Block timestamp (ms) of the agent's on-chain anchor — the unfakeable basis for reputation age. */
   anchoredAt?: number;
   inclusionVerified: boolean;
+  /** The agent's chain head matches the on-chain HeadRegistry commitment (no withheld tail). */
+  headVerified: boolean;
   tier2Badge: boolean;
   /** Cumulative mark-to-market P&L over the sampled settled trades, in chain order (descriptive). */
   pnlSeries: number[];
@@ -87,6 +93,7 @@ export interface EvidenceReport {
     settled: number;
     anchoredAgents: number;
     inclusionAgents: number;
+    headsVerified: number;
     tier2Agents: number;
     fakeCatches: number;
     handoffs: number;
@@ -96,6 +103,7 @@ export interface EvidenceReport {
     verifications: boolean;
     fakeCatches: boolean;
     inclusionPerAgent: boolean;
+    heads: boolean;
     handoffs: boolean;
     allMet: boolean;
   };
@@ -179,6 +187,12 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
       }
     }
 
+    let headVerified = false;
+    if (config.headRegistry) {
+      const committed = await config.headRegistry.getHead(store.keyPair.publicKeyHex);
+      headVerified = verifyHead(chain, committed).ok;
+    }
+
     const t2 = await rederiveChain(sample(chain, tier2Sample), config.source);
 
     const enrolledAt = chain[0]?.committed_at;
@@ -201,6 +215,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
       anchorBlock,
       anchoredAt,
       inclusionVerified,
+      headVerified,
       tier2Badge: t2.badge,
       pnlSeries,
       handoffs: chain.filter((c) => c.kind === "memory_purchase").length,
@@ -239,6 +254,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
   }
 
   const inclusionAgents = agentReports.filter((a) => a.inclusionVerified).length;
+  const headsVerified = agentReports.filter((a) => a.headVerified).length;
   const totalHandoffs = agentReports.reduce((sum, a) => sum + a.handoffs, 0);
   const nameById = new Map(agentReports.map((a) => [a.agentId, a.name]));
   const handoffDetails: HandoffDetail[] = rawHandoffs.map((h) => ({
@@ -252,6 +268,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
     verifications: verifiedPassed >= 50,
     fakeCatches: fakeCatches >= 3,
     inclusionPerAgent: agentReports.length > 0 && inclusionAgents === agentReports.length,
+    heads: agentReports.length > 0 && headsVerified === agentReports.length,
     handoffs: totalHandoffs >= 5,
   };
 
@@ -268,6 +285,7 @@ export async function gatherEvidence(config: EvidenceConfig): Promise<EvidenceRe
       settled,
       anchoredAgents: agentReports.filter((a) => a.anchored).length,
       inclusionAgents,
+      headsVerified,
       tier2Agents: agentReports.filter((a) => a.tier2Badge).length,
       fakeCatches,
       handoffs: totalHandoffs,
@@ -301,6 +319,7 @@ export function formatEvidenceReport(r: EvidenceReport): string {
     `Verification sample: ${r.totals.verifiedPassed}/${r.totals.sampled} PASSED (G1), ${r.totals.settled} settled`,
   );
   L.push(`On-chain anchors: ${r.totals.anchoredAgents}/${r.totals.agents} agents · inclusion verified ${r.totals.inclusionAgents}/${r.totals.agents}`);
+  L.push(`On-chain heads (no withheld tail): ${r.totals.headsVerified}/${r.totals.agents} agents`);
   L.push(`Tier-2 reproducible: ${r.totals.tier2Agents} agent(s)`);
   L.push(`MemorySlice handoffs (x402 stub): ${r.totals.handoffs}`);
   L.push("");
@@ -314,6 +333,7 @@ export function formatEvidenceReport(r: EvidenceReport): string {
   L.push(`  >=50 verifications            : ${yn(r.baseline.verifications)} (${r.totals.verifiedPassed})`);
   L.push(`  >=3 fake catches              : ${yn(r.baseline.fakeCatches)} (${r.totals.fakeCatches})`);
   L.push(`  >=1 inclusion proof / agent   : ${yn(r.baseline.inclusionPerAgent)} (${r.totals.inclusionAgents}/${r.totals.agents})`);
+  L.push(`  on-chain head / agent         : ${yn(r.baseline.heads)} (${r.totals.headsVerified}/${r.totals.agents})`);
   L.push(`  >=5 MemorySlice handoffs      : ${yn(r.baseline.handoffs)} (${r.totals.handoffs})`);
   L.push(`  ALL MET                       : ${r.baseline.allMet ? "YES ✓" : "NO"}`);
   L.push("");

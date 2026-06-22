@@ -109,6 +109,7 @@ export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOp
         <div class="kv"><span>anchored (G2)</span>${a.anchored ? `block ${blockLink(a.anchorBlock, explorer)}` : `<span class="muted">not anchored</span>`}</div>
         <div class="kv"><span>merkle root</span><code>${root}</code></div>
         <div class="kv"><span>inclusion proof</span>${a.inclusionVerified ? `<span class="ok">verified ✓</span>` : `<span class="bad">unverified ✗</span>`}</div>
+        <div class="kv"><span>on-chain head</span>${a.headVerified ? `<span class="ok">verified ✓</span>` : `<span class="bad">unverified ✗</span>`}</div>
         ${sparkline(a.pnlSeries)}
       </div>`;
     })
@@ -203,6 +204,7 @@ export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOp
     ${pill(b.verifications, `${t.verifiedPassed} verifications`)}
     ${pill(b.fakeCatches, `${t.fakeCatches} fake catches`)}
     ${pill(b.inclusionPerAgent, `${t.inclusionAgents}/${t.agents} inclusion proofs`)}
+    ${pill(b.heads, `${t.headsVerified}/${t.agents} on-chain heads`)}
     ${pill(b.handoffs, `${t.handoffs} memory handoffs`)}
   </div>
 
@@ -225,6 +227,7 @@ ${cards}
     <div class="stat"><b>${t.verifiedPassed}/${t.sampled}</b><span>G1 PASSED (re-fetched + replayed)</span></div>
     <div class="stat"><b>${t.settled}</b><span>settled outcomes</span></div>
     <div class="stat"><b>${t.anchoredAgents}/${t.agents}</b><span>anchored on Base</span></div>
+    <div class="stat"><b>${t.headsVerified}/${t.agents}</b><span>on-chain heads (no withheld tail)</span></div>
     <div class="stat"><b>${t.tier2Agents}</b><span>Tier-2 reproducible</span></div>
     <div class="stat"><b>${t.handoffs}</b><span>MemorySlice handoffs (x402 stub)</span></div>
   </div>
