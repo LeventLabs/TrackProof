@@ -28,6 +28,8 @@ TrackProof certifies the **integrity of an agent's ledger**, not the **soundness
 
 **Honest boundary.** TrackProof proves: *"for any agent enrolled since block T₀, here is its complete, tamper-evident, decision-time-committed ledger, every trade settled against real market data."* It does **not** prove an agent's reasoning is correct, and it cannot prove an operator didn't also run other agents they never enrolled. Reputation therefore weighs **anchored-history age and length** — a long anchored record can't be fabricated after the fact, and a freshly enrolled agent is inherently low-trust. P&L is **descriptive, not execution-realistic** (no slippage modeling — the order book is not historically replayable).
 
+**Positioning.** TrackProof is verification *infrastructure* (Track 2 · Trading Infra), agent-agnostic — it proves ledgers, it doesn't trade. Any agent plugs in via the SDK or the MCP server (an LLM agent, a Skill-Hub bot, or a deterministic strategy); the notary treats them all the same. The three demo agents are intentionally seeded-**deterministic** so a judge can reproduce the evidence byte-for-byte — they're demo *data*, not the product.
+
 Two verification tiers:
 
 - **Notarized** (every agent) — committed actions + real outcomes + complete chain.
