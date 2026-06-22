@@ -4,7 +4,7 @@
 
 TrackProof is a **track-record notary** for AI trading agents. Every simulated decision an agent makes becomes a signed, hash-chained **Capsule** that can be independently replayed against real market data, committed on-chain *before* its outcome is known, and proven to belong to a complete, gap-free history. Honest agents can prove their performance; a fabricated "+412%" record fails verification and is caught.
 
-> **Status:** runnable from a clean clone — `npm install && npm test` (79 tests; +7 Solidity via `npm run test:contracts`). The on-chain layer is **live on Base Sepolia** (addresses below). **Simulation / paper trading only — no real capital, no real-account orders.** Built for the Bitget AI Base Camp Hackathon S1 (Track 2 · Trading Infra).
+> **Status:** runnable from a clean clone — `npm install && npm test` (89 tests; +7 Solidity via `npm run test:contracts`). The on-chain layer is **live on Base Sepolia** (addresses below). **Simulation / paper trading only — no real capital, no real-account orders.** Built for the Bitget AI Base Camp Hackathon S1 (Track 2 · Trading Infra).
 
 ---
 
@@ -75,7 +75,7 @@ No API keys: market history comes from Bitget's **public** endpoints, and on-cha
 
 ```bash
 git clone <repo-url> trackproof && cd trackproof
-npm install && npm test          # builds + runs the suite (79 tests; +7 Solidity via npm run test:contracts)
+npm install && npm test          # builds + runs the suite (89 tests; +7 Solidity via npm run test:contracts)
 
 # 1. Emit a capsule over real BTCUSDT history, then verify it locally (G1 + G3)
 npm run trackproof -- emit   --instrument BTCUSDT --demo
@@ -135,11 +135,11 @@ Tools: **`capsule_emit`** (record a paper trade decision over real Bitget histor
 | `Anchor` (Merkle-root registry) | [`0x290825Ee1124617649c527A2230881e63173519D`](https://sepolia.basescan.org/address/0x290825Ee1124617649c527A2230881e63173519D) |
 | `IdentityRegistry` (ERC-8004-compatible) | [`0xc785F1124d7C8e77aFF446B377C013fE4A2857F9`](https://sepolia.basescan.org/address/0xc785F1124d7C8e77aFF446B377C013fE4A2857F9) |
 
-A live evidence run notarized **over 1,900 capsules across 3 agents** (3 Merkle roots on Base, one inclusion proof per agent), with **60/60 sampled decisions re-verified (G1)**, **5/5 seeded fakes caught** (fabricated prices → G1; a deleted losing trade → G3), and **6 agent-to-agent MemorySlice handoffs** over the x402 stub — each a verifiable `memory_purchase` capsule.
+A live evidence run notarized **over 1,900 capsules across 3 agents** (3 Merkle roots on Base, one inclusion proof per agent), with **60/60 sampled decisions re-verified (G1)**, **2 seeded fakes caught** across 5 capsule-level checks (fabricated prices → G1 ×4; a deleted losing trade → G3), and **6 agent-to-agent MemorySlice handoffs** over the x402 stub — each a verifiable `memory_purchase` capsule.
 
 ## Architecture
 
-A TypeScript monorepo (npm workspaces, native-first — `node:crypto` for signing, `fetch` for data; the only runtime deps are `viem` for Base and the MCP SDK):
+A TypeScript monorepo (npm workspaces, native-first — `node:crypto` for signing, `fetch` for data; the only third-party runtime deps are `viem` (Base) and the MCP SDK + `zod` (the MCP server)):
 
 | Package | Responsibility |
 |---|---|

@@ -32,7 +32,7 @@ test("gatherEvidence aggregates counts, per-agent inclusion, Tier-2 badge, and >
 
     const text = formatEvidenceReport(report);
     assert.match(text, /verifiable usage evidence/);
-    assert.match(text, /Fake records caught/);
+    assert.match(text, /Caught fakes \(\d+ seeded, \d+ capsule-level catches\)/);
     assert.match(text, /Baseline \(R11\.2\)/);
   } finally {
     await rm(baseDir, { recursive: true, force: true });

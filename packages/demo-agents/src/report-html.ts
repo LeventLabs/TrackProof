@@ -199,7 +199,7 @@ export function formatEvidenceHtml(report: EvidenceReport, options: HtmlReportOp
     <span class="pill ${b.allMet ? "ok" : "bad"} allmet">${b.allMet ? "ALL BASELINE MET ✓" : "BASELINE INCOMPLETE"}</span>
     ${pill(b.capsules, `${t.capsules} capsules / ${t.agents} agents`)}
     ${pill(b.verifications, `${t.verifiedPassed} verifications`)}
-    ${pill(b.fakeCatches, `${t.fakeCatches} fakes caught`)}
+    ${pill(b.fakeCatches, `${t.fakeCatches} fake catches`)}
     ${pill(b.inclusionPerAgent, `${t.inclusionAgents}/${t.agents} inclusion proofs`)}
     ${pill(b.handoffs, `${t.handoffs} memory handoffs`)}
   </div>
@@ -226,7 +226,7 @@ ${cards}
     <div class="stat"><b>${t.handoffs}</b><span>MemorySlice handoffs (x402 stub)</span></div>
   </div>
 
-  <h2>Caught fakes (${t.fakeCatches})</h2>
+  <h2>Caught fakes — ${report.fakes.length} seeded, ${t.fakeCatches} capsule-level catches</h2>
 ${fakes}
 
   <h2>MemorySlice handoffs — x402 stub (${report.handoffs.length})</h2>

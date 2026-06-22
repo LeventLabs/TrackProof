@@ -286,7 +286,7 @@ export function formatEvidenceReport(r: EvidenceReport): string {
   L.push(`Tier-2 reproducible: ${r.totals.tier2Agents} agent(s)`);
   L.push(`MemorySlice handoffs (x402 stub): ${r.totals.handoffs}`);
   L.push("");
-  L.push(`Fake records caught (${r.totals.fakeCatches} total):`);
+  L.push(`Caught fakes (${r.fakes.length} seeded, ${r.totals.fakeCatches} capsule-level catches):`);
   for (const f of r.fakes) {
     L.push(`  [${f.failureClass}] ${f.claim} — ${f.detail} ${f.caught > 0 ? "✓ caught" : "✗ MISSED"}`);
   }
