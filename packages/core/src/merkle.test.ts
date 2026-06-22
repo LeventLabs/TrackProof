@@ -9,11 +9,16 @@ test("an empty tree is the zero root", () => {
   assert.equal(merkleRoot([]), ZERO_ROOT);
 });
 
-test("a single leaf: root equals the leaf and an empty proof verifies", () => {
+test("a single leaf: the root is the domain-separated leaf hash, and an empty proof verifies", () => {
   const l = leaf("a");
   const { root, proofs } = buildMerkle([l]);
-  assert.equal(root, l);
+  assert.notEqual(root, l); // domain-separated: the tree leaf is distinct from the raw leaf
   assert.ok(verifyMerkleProof(l, proofs[0]!, root));
+});
+
+test("domain separation: an internal node can never verify as a leaf", () => {
+  const { root } = buildMerkle([leaf("a"), leaf("b")]); // root is an internal node
+  assert.equal(verifyMerkleProof(root, [], root), false); // re-presenting a node hash as a leaf fails
 });
 
 test("every leaf's proof verifies (even count)", () => {
