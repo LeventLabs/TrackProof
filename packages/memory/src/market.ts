@@ -27,8 +27,11 @@ export interface PublishParams {
 }
 
 /**
- * An in-process MemorySlice market. It holds published slices and escrows each slice's symmetric
- * key, releasing it only against a payment receipt settled to the seller (see `purchaseSlice`).
+ * An in-process MemorySlice market. It holds published slices and releases each slice's symmetric key
+ * against a **facilitator payment receipt** for the slice price (see `purchaseSlice`). The receipt is
+ * trusted from the facilitator: the local stub mints `stub:` receipts without a real settlement — a
+ * real on-chain settlement is shown in `examples/x402-live`. This is a key-release gate, not an
+ * on-chain escrow.
  */
 export class MemoryMarket {
   private readonly entries = new Map<string, { slice: MemorySlice; key: Buffer }>();
@@ -52,7 +55,7 @@ export class MemoryMarket {
     return slice;
   }
 
-  /** Public listing — never exposes the escrowed key. */
+  /** Public listing — never exposes the slice's key. */
   list(): MemorySlice[] {
     return [...this.entries.values()].map((e) => e.slice);
   }
@@ -61,12 +64,20 @@ export class MemoryMarket {
     return this.entries.get(sliceId)?.slice;
   }
 
-  /** Release the slice key against a receipt that settled payment to the slice's seller. */
-  releaseKey(sliceId: string, receipt: { payee: string }): Buffer {
+  /**
+   * Release the slice key against a facilitator receipt that paid the slice price to the seller. The
+   * receipt is trusted from the facilitator (the stub mints it without a real settlement); this checks
+   * the receipt is well-formed and matches the slice, not that funds actually moved on-chain.
+   */
+  releaseKey(sliceId: string, receipt: { payee: string; amount: string; payment_ref: string }): Buffer {
     const entry = this.entries.get(sliceId);
     if (!entry) throw new Error(`unknown slice ${sliceId}`);
+    if (!receipt.payment_ref) throw new Error("missing payment reference");
     if (receipt.payee !== entry.slice.seller_agent_id) {
-      throw new Error("payment payee does not match the slice seller");
+      throw new Error("receipt payee is not the slice seller");
+    }
+    if (Number(receipt.amount) < Number(entry.slice.price)) {
+      throw new Error("receipt amount is below the slice price");
     }
     return entry.key;
   }

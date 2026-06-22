@@ -61,3 +61,12 @@ test("an agent cannot buy its own slice; an unknown slice throws", async () => {
     rmSync(home, { recursive: true, force: true });
   }
 });
+
+test("releaseKey rejects a malformed, mis-addressed, or underpaying receipt", () => {
+  const market = new MemoryMarket();
+  const slice = market.publish("seller", { name: "x", scope: "BTCUSDT", price: "5", capsule_refs: [], body: "edge" });
+  assert.throws(() => market.releaseKey(slice.slice_id, { payee: "seller", amount: "5", payment_ref: "" }), /payment reference/);
+  assert.throws(() => market.releaseKey(slice.slice_id, { payee: "wrong", amount: "5", payment_ref: "r" }), /payee/);
+  assert.throws(() => market.releaseKey(slice.slice_id, { payee: "seller", amount: "1", payment_ref: "r" }), /below the slice price/);
+  assert.ok(market.releaseKey(slice.slice_id, { payee: "seller", amount: "5", payment_ref: "stub:abc" }) instanceof Buffer);
+});
