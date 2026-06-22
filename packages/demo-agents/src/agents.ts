@@ -8,7 +8,7 @@ export interface DemoAgent {
   key: string;
   /** Human display name for the leaderboard. */
   name: string;
-  /** "notarized" (Tier-1) for all; exactly ONE agent is "reproducible" (Tier-2) — §4.6. */
+  /** "notarized" (Tier-1) for all; exactly ONE agent is "reproducible" (Tier-2), never generalized. */
   tier: Tier;
   /** The pinned deterministic strategy this agent runs. */
   strategy: StrategySpec;

@@ -64,7 +64,7 @@ test("a sampled capsule passes G1 and settles against the same source", async ()
   }
 });
 
-test("only the Tier-2 agent carries a repro badge (§4.6: never generalized)", async () => {
+test("only the Tier-2 agent carries a repro badge (never generalized)", async () => {
   const baseDir = freshBaseDir();
   try {
     const results = await runAgents(runConfig(baseDir));
