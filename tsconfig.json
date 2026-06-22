@@ -6,6 +6,7 @@
     { "path": "packages/base" },
     { "path": "packages/sdk" },
     { "path": "packages/demo-agents" },
+    { "path": "packages/memory" },
     { "path": "packages/mcp-server" },
     { "path": "packages/skill" },
     { "path": "packages/cli" }

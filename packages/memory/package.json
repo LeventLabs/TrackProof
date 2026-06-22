@@ -1,0 +1,27 @@
+{
+  "name": "@trackproof/memory",
+  "version": "0.0.0",
+  "description": "TrackProof MemorySlice market + x402 stub: agents sell sealed know-how; a purchase is a verifiable memory_purchase capsule.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*"
+  ],
+  "dependencies": {
+    "@trackproof/core": "0.0.0",
+    "@trackproof/sdk": "0.0.0"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "node --test \"dist/**/*.test.js\""
+  }
+}
