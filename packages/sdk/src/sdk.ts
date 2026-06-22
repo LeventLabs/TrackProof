@@ -1,7 +1,9 @@
 import {
   appendCapsule,
   computeInputsDigest,
+  type CanonicalValue,
   type Candle,
+  type FundingRate,
   type SignedCapsule,
   type TradeDecisionBody,
 } from "@trackproof/core";
@@ -20,6 +22,8 @@ export interface EmitTrade {
   action: TradeDecisionBody["action"];
   /** ms; defaults to the last input candle's time. */
   decisionTime?: number;
+  /** Optional funding-rate history (futures) folded into the proof; pins `market_ref.funding`. */
+  funding?: FundingRate[];
   /** Recorded as attested context — never used as proof. */
   reasoning?: string;
 }
@@ -57,14 +61,23 @@ export class TrackProof {
       decisionTime = windowEnd + (windowEnd - candles[candles.length - 2]!.time);
     }
 
+    const fundingSorted =
+      trade.funding && trade.funding.length > 0 ? [...trade.funding].sort((a, b) => a.time - b.time) : undefined;
+
     const body: TradeDecisionBody = {
       market_ref: {
         venue: "bitget",
         instrument: trade.instrument,
         decision_time: decisionTime,
         candles: { granularity: trade.granularity, window: [windowStart, windowEnd] },
+        ...(fundingSorted
+          ? { funding: { window: [fundingSorted[0]!.time, fundingSorted[fundingSorted.length - 1]!.time] as [number, number] } }
+          : {}),
       },
-      inputs_digest: computeInputsDigest({ candles }),
+      inputs_digest: computeInputsDigest({
+        candles,
+        ...(fundingSorted ? { funding: fundingSorted as unknown as CanonicalValue } : {}),
+      }),
       action: trade.action,
       ...(trade.reasoning ? { attested: { reasoning_trace: trade.reasoning } } : {}),
     };

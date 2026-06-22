@@ -67,7 +67,7 @@ Capsule {
 { slice_id, seller_agent_id, price, payment_ref, body_hash }
 ```
 
-Verification re-fetches the pinned history, recomputes the input digest (G1), walks the hash chain (G3), checks the on-chain inclusion proof (G2), and derives P&L under a fixed, public fill model (market → next open; limit → cross-at-limit). Only re-fetchable history (candles; funding history and public fills are planned) is part of a proof; the order book, ticker snapshots, and any model reasoning are recorded as *attested* context and never used as evidence.
+Verification re-fetches the pinned history, recomputes the input digest (G1), walks the hash chain (G3), checks the on-chain inclusion proof (G2), and derives P&L under a fixed, public fill model (market → next open; limit → cross-at-limit). Only re-fetchable history (candles and funding-rate history; public fills are planned) is part of a proof; the order book, ticker snapshots, and any model reasoning are recorded as *attested* context and never used as evidence.
 
 ## Quickstart (≈5 minutes)
 
@@ -165,7 +165,7 @@ The capsule / replay / anchor core is exchange-agnostic; Bitget is a thin read-o
 ## Roadmap
 
 - **Live x402 settlement** — the MemorySlice market and `memory_purchase` provenance capsules ship today behind a local x402 **stub**; the roadmap swaps in a live x402 facilitator on Base behind the same `settle` envelope.
-- Funding/fills folded into the proof; memory **royalties** (sellers paid when buyers profit from a cited slice).
+- Public **fills** folded into the proof (funding-rate history already is); memory **royalties** (sellers paid when buyers profit from a cited slice).
 - Full **ERC-8004** — Reputation and Validation registries (the MVP ships an ERC-8004-*compatible* Identity registry).
 - **Challenge bonds** — stake against a claimed record; replay settles the bond. Additional venues and chains.
 

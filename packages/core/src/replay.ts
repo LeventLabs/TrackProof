@@ -25,8 +25,17 @@ export interface CandleQuery {
  * The market-data dependency the replay engine inverts on. The core stays
  * exchange-agnostic; an adapter (e.g. `@trackproof/bitget`) implements this.
  */
+/** A funding-rate observation: the rate that settled at `time` (ms). Futures only. */
+export interface FundingRate {
+  time: number;
+  fundingRate: string;
+}
+
 export interface MarketDataSource {
   getCandles(query: CandleQuery): Promise<Candle[]>;
+  /** Optional funding-rate history (futures only); needed only to verify a capsule that pins
+   *  `market_ref.funding` (R1.3). */
+  getFundingRate?(query: CandleQuery): Promise<FundingRate[]>;
 }
 
 /** The replayable inputs an agent claims to have acted on (the G1 evidence). */
@@ -153,6 +162,17 @@ async function fetchWindow(
   return candles.filter((c) => c.time >= start && c.time <= end).sort((a, b) => a.time - b.time);
 }
 
+/** Re-fetch + canonicalize the pinned funding window (ascending), so emit and replay agree. */
+async function fetchFundingWindow(
+  source: MarketDataSource,
+  instrument: string,
+  start: number,
+  end: number,
+): Promise<FundingRate[]> {
+  const funding = await source.getFundingRate!({ instrument, granularity: "", startTime: start, endTime: end });
+  return funding.filter((f) => f.time >= start && f.time <= end).sort((a, b) => a.time - b.time);
+}
+
 /** Authenticity (signature + G1) + sim-fill + outcome maturity for a trade_decision capsule. */
 export async function verifyTradeDecision(
   capsule: SignedCapsule,
@@ -174,7 +194,24 @@ export async function verifyTradeDecision(
     market_ref.candles.window[0],
     market_ref.candles.window[1],
   );
-  if (computeInputsDigest({ candles: inputCandles }) !== body.inputs_digest) {
+  const inputs: ReplayInputs = { candles: inputCandles };
+  if (market_ref.funding) {
+    if (!source.getFundingRate) {
+      return {
+        kind: "trade_decision",
+        verdict: "FAILED_DATA",
+        reason: "capsule pins funding but the data source cannot re-fetch it (G1)",
+      };
+    }
+    const funding = await fetchFundingWindow(
+      source,
+      market_ref.instrument,
+      market_ref.funding.window[0],
+      market_ref.funding.window[1],
+    );
+    inputs.funding = funding as unknown as CanonicalValue;
+  }
+  if (computeInputsDigest(inputs) !== body.inputs_digest) {
     return { kind: "trade_decision", verdict: "FAILED_DATA", reason: "inputs_digest mismatch (G1)" };
   }
 

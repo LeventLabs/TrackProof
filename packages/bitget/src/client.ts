@@ -1,4 +1,4 @@
-import type { Candle, CandleQuery, MarketDataSource } from "@trackproof/core";
+import type { Candle, CandleQuery, FundingRate, MarketDataSource } from "@trackproof/core";
 
 const DEFAULT_BASE_URL = "https://api.bitget.com";
 const PAGE_LIMIT = 200;
@@ -17,6 +17,12 @@ interface BitgetCandlesResponse {
   code: string;
   msg: string;
   data?: string[][];
+}
+
+interface BitgetFundingResponse {
+  code: string;
+  msg: string;
+  data?: { symbol: string; fundingRate: string; fundingTime: string }[];
 }
 
 /**
@@ -107,6 +113,33 @@ export class BitgetMarketData implements MarketDataSource {
 
   async getCandles(query: CandleQuery): Promise<Candle[]> {
     return paginateCandles((endTime, limit) => this.fetchPage(query, endTime, limit), query);
+  }
+
+  /** Funding-rate history over Bitget's PUBLIC mix `history-fund-rate` (futures only, keyless). */
+  async getFundingRate(query: CandleQuery): Promise<FundingRate[]> {
+    const out: FundingRate[] = [];
+    for (let pageNo = 1; pageNo <= MAX_PAGES; pageNo++) {
+      const url = new URL("/api/v2/mix/market/history-fund-rate", this.baseUrl);
+      url.searchParams.set("symbol", query.instrument);
+      url.searchParams.set("productType", this.productType);
+      url.searchParams.set("pageSize", "100");
+      url.searchParams.set("pageNo", String(pageNo));
+
+      const response = await fetch(url, { headers: { accept: "application/json" } });
+      if (!response.ok) {
+        throw new Error(`Bitget history-fund-rate HTTP ${response.status} for ${query.instrument}`);
+      }
+      const json = (await response.json()) as BitgetFundingResponse;
+      if (json.code !== "00000") {
+        throw new Error(`Bitget error ${json.code}: ${json.msg}`);
+      }
+      const rows = json.data ?? [];
+      if (rows.length === 0) break;
+      for (const r of rows) out.push({ time: Number(r.fundingTime), fundingRate: r.fundingRate });
+      // Rows are newest-first; stop once a page reaches before the requested window.
+      if (Number(rows[rows.length - 1]!.fundingTime) <= query.startTime) break;
+    }
+    return out.filter((f) => f.time >= query.startTime && f.time <= query.endTime).sort((a, b) => a.time - b.time);
   }
 
   private async fetchPage(query: CandleQuery, endTime: number, limit: number): Promise<Candle[]> {
