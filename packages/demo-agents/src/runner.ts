@@ -136,6 +136,16 @@ export async function runAgents(config: RunnerConfig): Promise<AgentRunResult[]>
     const store = openStore(join(config.baseDir, agent.key));
     if (fresh) resetChain(store.home);
 
+    // Append-only continuation: when not starting fresh, skip windows already covered by the
+    // agent's existing chain, so a recurring tick adds only genuinely new decisions (no duplicates).
+    const coveredUntil = fresh
+      ? -Infinity
+      : readChain(store).reduce((max, c) => {
+          if (c.kind !== "trade_decision") return max;
+          const t = (c.body as TradeDecisionBody).market_ref.decision_time;
+          return t > max ? t : max;
+        }, -Infinity);
+
     const interval = granularityMs(agent.granularity);
     const latestDecisionTime = now() - settleGuardMs;
     let emitted = 0;
@@ -144,6 +154,7 @@ export async function runAgents(config: RunnerConfig): Promise<AgentRunResult[]>
       const window = history.slice(i, i + agent.windowSize);
       const decisionTime = window[window.length - 1]!.time + interval;
       if (decisionTime > latestDecisionTime) break; // too recent — its outcome wouldn't settle yet
+      if (decisionTime <= coveredUntil) continue; // already covered by the existing chain (no dup)
       const action = agent.strategy.fn(window, agent.seed);
       if (!action) continue;
       emitDecision(store, agent, window, action, decisionTime);

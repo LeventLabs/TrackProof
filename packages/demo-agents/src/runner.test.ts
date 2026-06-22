@@ -45,6 +45,29 @@ test("runner emits a verifiable chain per agent over fixture history", async () 
   }
 });
 
+test("append-only continuation: a later tick adds only new decisions; re-running adds none", async () => {
+  const baseDir = freshBaseDir();
+  const agents = [DEMO_AGENTS[0]!];
+  const base = { baseDir, source: new FixtureMarketData(), agents, lookbackMs: 12 * HOUR, settleGuardMs: HOUR };
+  try {
+    await runAgents({ ...base, fresh: true, now: () => NOW });
+    const home = openStore(join(baseDir, agents[0]!.key)).home;
+    const before = readChain(openStore(home)).length;
+    assert.ok(before > 0);
+
+    const tick = await runAgents({ ...base, fresh: false, now: () => NOW + 6 * HOUR });
+    const after = readChain(openStore(home)).length;
+    assert.ok(tick[0]!.emitted > 0, "the tick should append new decisions");
+    assert.equal(after, before + tick[0]!.emitted, "the chain grows by exactly the tick count");
+    assert.ok(verifyChain(readChain(openStore(home))).ok, "the chain stays valid after the tick");
+
+    const again = await runAgents({ ...base, fresh: false, now: () => NOW + 6 * HOUR });
+    assert.equal(again[0]!.emitted, 0, "re-running the same tick adds no duplicates");
+  } finally {
+    rmSync(baseDir, { recursive: true, force: true });
+  }
+});
+
 test("a sampled capsule passes G1 and settles against the same source", async () => {
   const baseDir = freshBaseDir();
   try {
