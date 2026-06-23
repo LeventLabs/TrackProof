@@ -15,6 +15,9 @@ const ANCHOR = process.env.TRACKPROOF_ANCHOR_ADDRESS ?? "0x290825Ee1124617649c52
 const pk = process.env.DEPLOYER_PRIVATE_KEY;
 if (!pk) throw new Error("set DEPLOYER_PRIVATE_KEY (a funded Base Sepolia key) to anchor");
 
+const useColor = (Boolean(process.stdout.isTTY) || Boolean(process.env.FORCE_COLOR)) && !process.env.NO_COLOR;
+const bool = (b) => (useColor ? `\x1b[1;${b ? "32" : "31"}m${b}\x1b[0m` : String(b));
+
 const instrument = "BTCUSDT";
 const granularity = "1min";
 const source = new BitgetMarketData();
@@ -44,11 +47,11 @@ try {
   console.log(`decision_time : ${new Date(decisionTime).toISOString()}`);
   console.log(`outcome_start : ${new Date(outcomeStart).toISOString()}  (decision + one ${granularity} candle)`);
   console.log(`anchored at   : ${new Date(record.timestamp).toISOString()}  (Base block ${record.block})`);
-  console.log(`anchored BEFORE outcome_start? ${record.timestamp < outcomeStart}  (margin ${marginS.toFixed(0)}s)`);
+  console.log(`anchored BEFORE outcome_start? ${bool(record.timestamp < outcomeStart)}  (margin ${marginS.toFixed(0)}s)`);
 
   const proof = proofs.get(capsuleLeaf(capsule)) ?? [];
   const c = verifyCommitment(capsule, proof, record, outcomeStart);
-  console.log(`G2 commitment : included=${c.included} certifiable=${c.certifiable}${c.reason ? ` (${c.reason})` : ""}`);
+  console.log(`G2 commitment : included=${bool(c.included)} certifiable=${bool(c.certifiable)}${c.reason ? ` (${c.reason})` : ""}`);
 } finally {
   rmSync(home, { recursive: true, force: true });
 }
