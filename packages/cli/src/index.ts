@@ -65,6 +65,12 @@ async function cmdEmit(flags: Record<string, string | boolean>): Promise<void> {
   console.log(`Stored in ${HOME}/. Run \`trackproof replay --last\` to verify it.`);
 }
 
+const useColor = (Boolean(process.stdout.isTTY) || Boolean(process.env.FORCE_COLOR)) && !process.env.NO_COLOR;
+const paint = (code: string, s: string): string => (useColor ? `\x1b[${code}m${s}\x1b[0m` : s);
+const green = (s: string): string => paint("1;32", s);
+const red = (s: string): string => paint("1;31", s);
+const dim = (s: string): string => paint("2", s);
+
 async function cmdVerify(flags: Record<string, string | boolean>, withAnchor: boolean): Promise<void> {
   const chain = readChain(openStore(HOME));
   if (chain.length === 0) {
@@ -77,18 +83,19 @@ async function cmdVerify(flags: Record<string, string | boolean>, withAnchor: bo
 
   console.log(`Verifying last capsule (seq ${target.seq}, ${chain.length} in chain):`);
   const failReason = g1.verdict !== "PASSED" && g1.reason ? ` — ${g1.reason}` : "";
-  console.log(`  G1 (real data + replay): ${g1.verdict}${failReason}`);
+  const g1Verdict = g1.verdict === "PASSED" ? green(g1.verdict) : red(g1.verdict);
+  console.log(`  G1 (real data + replay): ${g1Verdict}${dim(failReason)}`);
   if (g1.kind === "trade_decision" && g1.verdict === "PASSED") {
     if (g1.outcome === "settled" && g1.fill?.filled) {
       console.log(`     fill ${g1.fill.fillPrice}   P&L ${g1.pnl} (descriptive, not execution-realistic)`);
     } else {
-      console.log(`     outcome PENDING — window not yet complete; replay later for final P&L`);
+      console.log(dim(`     outcome PENDING — window not yet complete; replay later for final P&L`));
     }
   }
-  console.log(`  G3 (chain complete):     ${g3.ok ? "yes" : `NO — broken at seq ${g3.firstBadSeq}`}`);
+  console.log(`  G3 (chain complete):     ${g3.ok ? green("yes") : red(`NO — broken at seq ${g3.firstBadSeq}`)}`);
 
   if (!withAnchor) {
-    console.log("  G2 (on-chain commitment): skipped (use --with-anchor)");
+    console.log(`  G2 (on-chain commitment): ${dim("skipped (use --with-anchor)")}`);
     return;
   }
   const anchor = loadAnchor(openStore(HOME));
@@ -108,9 +115,11 @@ async function cmdVerify(flags: Record<string, string | boolean>, withAnchor: bo
   }
   const outcomeStart = g1.kind === "trade_decision" ? g1.outcomeStart : undefined;
   const commitment = verifyCommitment(target, proof, record, outcomeStart);
+  const inc = commitment.included ? green("included=true") : red("included=false");
+  const cert = commitment.certifiable ? green("certifiable=true") : dim("certifiable=false");
   console.log(
-    `  G2 (on-chain commitment): included=${commitment.included} certifiable=${commitment.certifiable}` +
-      `${commitment.reason ? ` — ${commitment.reason}` : ""} (Base block ${record.block})`,
+    `  G2 (on-chain commitment): ${inc} ${cert}` +
+      `${commitment.reason ? dim(` — ${commitment.reason}`) : ""} (Base block ${record.block})`,
   );
 }
 
