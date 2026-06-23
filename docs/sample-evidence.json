@@ -1,0 +1,201 @@
+{
+  "generatedAt": 1782241527625,
+  "agents": [
+    {
+      "key": "momentum",
+      "name": "Momentum Mara",
+      "tier": "notarized",
+      "agentId": "373e381141b1d17c26c69148187b5cc490b265b59bdcb0b74e0b7a10f26f0bb3",
+      "capsules": 771,
+      "chainOk": true,
+      "enrolledAt": 1781682840000,
+      "anchored": true,
+      "anchorRoot": "8a1efb23846a87d3f66cfe9f0dea9c84582e57a8b7827dc66f2937b0f0054321",
+      "anchorBlock": 43193172,
+      "anchoredAt": 1782154632000,
+      "inclusionVerified": true,
+      "headVerified": true,
+      "tier2Badge": false,
+      "pnlSeries": [
+        -79.47,
+        -295.73,
+        8.67,
+        625.87,
+        410.19,
+        -2271.9,
+        -1597.29,
+        -1607.61,
+        -1529.11,
+        -1139.67,
+        -1320.29,
+        -1029.2,
+        825.4,
+        22.48,
+        -287.06,
+        -523.26,
+        -617.3,
+        -1008.8,
+        -984.54,
+        -773.9
+      ],
+      "handoffs": 2,
+      "reputation": 1546
+    },
+    {
+      "key": "reversion",
+      "name": "Reversion Rey",
+      "tier": "notarized",
+      "agentId": "61d6f0f302ee05f905b0d29b9914e8d7e61d56e278e3b66867366b2e47889b11",
+      "capsules": 852,
+      "chainOk": true,
+      "enrolledAt": 1781682540000,
+      "anchored": true,
+      "anchorRoot": "c85e2b8460c8f422410c14d3e25e4e8ce9dfab458d187e89fcf36bfbc3cbbe4c",
+      "anchorBlock": 43193173,
+      "anchoredAt": 1782154634000,
+      "inclusionVerified": true,
+      "headVerified": true,
+      "tier2Badge": false,
+      "pnlSeries": [
+        -12.16,
+        -25.06,
+        -14.92,
+        -15.79,
+        -35.17,
+        -39.63,
+        -26.46,
+        -33.14,
+        -64.4,
+        -69.41,
+        -77.96,
+        -97.08,
+        -134.88,
+        -118.23,
+        -124.35,
+        -132.51,
+        -130.83,
+        -133.23,
+        -116.31,
+        -121.44
+      ],
+      "handoffs": 2,
+      "reputation": 1709
+    },
+    {
+      "key": "breakout",
+      "name": "Breakout Bo",
+      "tier": "reproducible",
+      "agentId": "592423fc4e9d6a9b856c9c031a17920edd416f14c08d2814589d8293ef2d40b6",
+      "capsules": 340,
+      "chainOk": true,
+      "enrolledAt": 1781682540000,
+      "anchored": true,
+      "anchorRoot": "04df767a000f0b27cb362872e23b3a760e851f1ed82da0358b108989aaf5f7de",
+      "anchorBlock": 43193174,
+      "anchoredAt": 1782154636000,
+      "inclusionVerified": true,
+      "headVerified": true,
+      "tier2Badge": true,
+      "pnlSeries": [
+        170.77,
+        211.02,
+        -28.98,
+        37.16,
+        -72.55,
+        -115.22,
+        -137.73,
+        -290.33,
+        -175.42,
+        -150.84,
+        -62.19,
+        667.35,
+        503.65,
+        724.66,
+        607.33,
+        646.77,
+        690.45,
+        699.57,
+        536.77,
+        619.78
+      ],
+      "handoffs": 2,
+      "reputation": 682
+    }
+  ],
+  "fakes": [
+    {
+      "key": "fake-fabricated",
+      "claim": "+412% ROI (fabricated prices)",
+      "failureClass": "G1",
+      "caught": 4,
+      "detail": "4/4 capsules failed G1 (FAILED_DATA)"
+    },
+    {
+      "key": "fake-deleted-loser",
+      "claim": "100% win rate (deleted its losing trade)",
+      "failureClass": "G3",
+      "caught": 1,
+      "detail": "chain breaks after the deleted seq 2"
+    }
+  ],
+  "handoffs": [
+    {
+      "buyer": "Momentum Mara",
+      "seller": "Reversion Rey",
+      "price": "5",
+      "payment_ref": "stub:bf9db18cf76afe9e0e5917f6b961fdff535b8ee80420cdb421fea443150bd881"
+    },
+    {
+      "buyer": "Momentum Mara",
+      "seller": "Breakout Bo",
+      "price": "5",
+      "payment_ref": "stub:8c67d0f7904e3846bbab03c5f5b37f4d423d0352ab1ea96ce18d358b84811f5e"
+    },
+    {
+      "buyer": "Reversion Rey",
+      "seller": "Momentum Mara",
+      "price": "5",
+      "payment_ref": "stub:019dff9888281b1ad77765c07dca89af7692f0194307b4d5aac1d9c7cf4f1e29"
+    },
+    {
+      "buyer": "Reversion Rey",
+      "seller": "Breakout Bo",
+      "price": "5",
+      "payment_ref": "stub:d8297938c4da17d63ed310307d6750df88c7ab4fd72610dffafe1a279b852025"
+    },
+    {
+      "buyer": "Breakout Bo",
+      "seller": "Momentum Mara",
+      "price": "5",
+      "payment_ref": "stub:0ab65942ff16c1b0738bc5b70d2368e34b936534fe7b5a7e094415aad6913c56"
+    },
+    {
+      "buyer": "Breakout Bo",
+      "seller": "Reversion Rey",
+      "price": "5",
+      "payment_ref": "stub:aa0cf91d52ee3ad49e4eacbaba662de23d4d71260a4942a8bb505a05dee33184"
+    }
+  ],
+  "totals": {
+    "agents": 3,
+    "capsules": 1963,
+    "sampled": 60,
+    "verifiedPassed": 60,
+    "settled": 60,
+    "anchoredAgents": 3,
+    "inclusionAgents": 3,
+    "headsVerified": 3,
+    "tier2Agents": 1,
+    "fakeCatches": 5,
+    "handoffs": 6
+  },
+  "baseline": {
+    "capsules": true,
+    "verifications": true,
+    "fakeCatches": true,
+    "inclusionPerAgent": true,
+    "heads": true,
+    "handoffs": true,
+    "allMet": true
+  }
+}

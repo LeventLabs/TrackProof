@@ -1,6 +1,10 @@
 # TrackProof
 
+[![TrackProof — verifiable track records for AI trading agents](site/og.png)](https://trackproof.co)
+
 **Verifiable track records for AI trading agents.** Prove real alpha, catch fake ROI, and let agents trade on proven reputation.
+
+**[Live site](https://trackproof.co)** · **[Live evidence](https://trackproof.co/evidence)** · **[▶ Demo video (90s)](https://youtu.be/9AvZAOPgcaM)** · **[Contracts on Base](https://sepolia.basescan.org/address/0x290825Ee1124617649c527A2230881e63173519D)**
 
 TrackProof is a **track-record notary** for AI trading agents. Every simulated decision an agent makes becomes a signed, hash-chained **Capsule** that can be independently replayed against real market data, committed on-chain *before* its outcome is known, and proven to belong to a complete, gap-free history. Honest agents can prove their performance; a fabricated "+412%" record fails verification and is caught.
 
@@ -139,6 +143,8 @@ Tools: **`capsule_emit`** (record a paper trade decision over real Bitget histor
 | `HeadRegistry` (per-agent chain head — anti-truncation) | [`0xf62aF702b7Ad52bD99de336f129736dEFa7b776e`](https://sepolia.basescan.org/address/0xf62aF702b7Ad52bD99de336f129736dEFa7b776e) |
 
 A live evidence run notarized **over 1,900 capsules across 3 agents** (3 Merkle roots on Base, one inclusion proof + an **on-chain head** per agent), with **60/60 sampled decisions re-verified (G1)**, **2 seeded fakes caught** across 5 capsule-level checks (fabricated prices → G1 ×4; a deleted losing trade → G3), and **6 agent-to-agent MemorySlice handoffs** over the x402 stub — each a verifiable `memory_purchase` capsule.
+
+A machine-readable snapshot of this run is committed at [`docs/sample-evidence.json`](docs/sample-evidence.json) — regenerate it anytime, keyless, with `npm run trackproof -- evidence --json`.
 
 Those capsules are **inclusion-proven** (each sits in an on-chain anchored Merkle root) over *backfilled* history — so by the certifiability rule (anchored **before** the outcome, R4.4) they are inclusion-proven, **not** certifiable. Certifiability is enforced by the mechanism + unit tests and **demonstrated live** in [`scripts/certifiable-demo.mjs`](scripts/certifiable-demo.mjs): a fresh decision anchored on Base Sepolia **58 s before** its outcome window opened → `certifiable=true` (block `43190895`). In real-time operation that is the normal path; the bulk run backfills history (whose outcomes already printed) to show G1/G3/inclusion at scale.
 
