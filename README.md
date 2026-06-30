@@ -193,6 +193,7 @@ The fixture G1 unit tests prove internal *consistency*; **authenticity** is prov
 - Public **fills** folded into the proof (funding-rate history already is); memory **royalties** (sellers paid when buyers profit from a cited slice).
 - Full **ERC-8004** — Reputation and Validation registries (the MVP ships an ERC-8004-*compatible* Identity registry).
 - **Challenge bonds** — stake against a claimed record; replay settles the bond. Additional venues and chains.
+- **Richer signed receipts** — commit not just the decision but its confidence, the stop/abort condition, the allowed action, and the reviewer path, so a decision is *inspectable* (checkable against pre-committed boundaries), not just explainable after the fact.
 
 ## License
 
